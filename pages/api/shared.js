@@ -6,8 +6,8 @@
  */
 
 const GRAPH_API    = "https://graph.microsoft.com/v1.0";
-const ROOT_DRIVE_ID = "b!whoE7FWYLUaYEImzCfTbC3Jdb0ZlNedDrl9AUW8vEtvo5yHX02WrQKkIpzT9z8IZ";
-const ROOT_ITEM_ID  = "01QSAFR6WCGH5GRB2XPBCIEBB3WWDRUCSH";
+const ROOT_DRIVE_ID = ["b!whoE7FWYLUaYEImzCfTbC3Jdb0ZlNedDrl9AUW8vEtvo5yHX02WrQKkIpzT9z8IZ", "b!wdSLol8Ty0-xSVCsjiX7pD9HNZgqlGVLvXtWan8vYJUt53I6xz_oSIEmiH_J07cM", "b!y6Mzv180OU6r0xjapSH3P9PBm-q8ShVCv-o-5bUJm5C_oS3WePVcTpnr0iBw4Sr1"];
+const ROOT_ITEM_ID  = ["01QSAFR6WCGH5GRB2XPBCIEBB3WWDRUCSH", "01UIZVXMR7A4PNUNZW5ZDL5Y4YFXDWPLVT", "01VMDDKAWY6S67LYPQ4FE3CZCUEDJRRL5R"];
 
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Método não permitido" });
@@ -15,11 +15,14 @@ export default async function handler(req, res) {
   const token = getCookie(req, "access_token");
   if (!token) return res.status(401).json({ error: "Não autenticado." });
 
-  try {
-    const url =
-      `${GRAPH_API}/drives/${ROOT_DRIVE_ID}/items/${ROOT_ITEM_ID}/children` +
-      `?$select=id,name,folder,video,file,size,lastModifiedDateTime,@microsoft.graph.downloadUrl` +
-      `&$top=200`;
+  for (let i = 0; i < ROOT_DRIVE_ID.length; i++) {
+    const driveId = ROOT_DRIVE_ID[i];
+    const itemId = ROOT_ITEM_ID[i];
+    try {
+      const url =
+        `${GRAPH_API}/drives/${driveId}/items/${itemId}/children` +
+        `?$select=id,name,folder,video,file,size,lastModifiedDateTime,@microsoft.graph.downloadUrl` +
+        `&$top=200`;
 
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
@@ -32,7 +35,7 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    const items = (data.value || []).map(i => normalizeItem(i, ROOT_DRIVE_ID));
+    const items = (data.value || []).map(i => normalizeItem(i, driveId));
     items.sort((a, b) => {
       if (a.type === "folder" && b.type !== "folder") return -1;
       if (a.type !== "folder" && b.type === "folder") return 1;
@@ -44,6 +47,7 @@ export default async function handler(req, res) {
     console.error("Erro em /api/shared:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
+}
 }
 
 function normalizeItem(item, driveId) {

@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         requests: [
           {
             entityTypes: ["driveItem"],
-            query: { queryString: "PLANEP - LOTE 2" },
+            query: { queryString: "LOTE 3 - STRATA" },
             fields: ["id", "name", "parentReference", "folder", "webUrl", "createdBy"],
             from: 0,
             size: 10,
