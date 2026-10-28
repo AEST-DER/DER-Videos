@@ -33,6 +33,13 @@ const ROOT_FOLDERS = [
   },
 ];
 
+const folderNames = {
+  "02 - Produto 2": "LOTE 1",
+  "PLANEP - LOTE 2": "LOTE 2 - PLANEP",
+  "PLANEP": "LOTE 2 - PLANEP",
+  
+};
+
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Método não permitido" });
 
@@ -59,7 +66,7 @@ export default async function handler(req, res) {
       const { driveId, data } = result.value;
       return {
         id: data.id,
-        name: data.name === "VÍDEOS RTA" ? "LOTE 1" : data.name || `Pasta ${index + 1}`,
+        name: folderNames[data.name] || data.name || `Pasta ${index + 1}`,
         type: "folder",
         driveId,
         childCount: data.folder?.childCount ?? null,
