@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       const { driveId, data } = result.value;
       return {
         id: data.id,
-        name: data.name || `Pasta ${index + 1}`,
+        name: data.name === "VÍDEOS RTA" ? "LOTE 1" : data.name || `Pasta ${index + 1}`,
         type: "folder",
         driveId,
         childCount: data.folder?.childCount ?? null,
