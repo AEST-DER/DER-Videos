@@ -31,6 +31,10 @@ const ROOT_FOLDERS = [
     driveId: "b!FMYdA-D_iESZQCQ6fXeblzHcIIBSXapEohXiUjrKcGHvPalwL-DbS7cHsiJcUgLb",
     itemId:  "01LLIJSH4JBVHVQZMCCVEZZW7DMQPCHBUL",
   },
+  {
+    itemId: "01JFH3TV7CMVXMZZ7DSJGLXDLZTC3VWBLL",
+    driveId: "b!IagbPkMxS06IPBiiSlUGbBZvKl1JzmlFtWfUToL4hQHch8lkZrbzRanNFWWaUNDq"
+  }
 ];
 
 const folderNames = {
