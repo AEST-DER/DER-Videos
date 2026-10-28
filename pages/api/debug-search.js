@@ -24,7 +24,7 @@ export default async function handler(req, res) {
         requests: [
           {
             entityTypes: ["driveItem"],
-            query: { queryString: "LOTE 5 - Systra" },
+            query: { queryString: "02 - Produto 2" },
             fields: ["id", "name", "parentReference", "folder", "webUrl", "createdBy"],
             from: 0,
             size: 10,
