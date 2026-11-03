@@ -40,7 +40,9 @@ const ROOT_FOLDERS = [
 const folderNames = {
   "02 - Produto 2": "LOTE 1",
   "PLANEP - LOTE 2": "LOTE 2 - PLANEP",
+  "PLANEP – LOTE 2": "LOTE 2 - PLANEP",
   "PLANEP": "LOTE 2 - PLANEP",
+  "LOTE 2": "LOTE 2 - PLANEP"
   
 };
 

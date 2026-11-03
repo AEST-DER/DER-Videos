@@ -52,7 +52,7 @@ DER-Videos/
     └── globals.css          ← design tokens + estilos (tema escuro)
 ```
 
-Para detalhes de cada arquivo, leia `references/arquivos.md`.
+Para detalhes de cada arquivo, leia [`references/arquivos.md`](references/arquivos.md).
 
 ---
 
@@ -76,7 +76,7 @@ Usuário → /api/auth/login → Microsoft Login → /api/auth/callback
 https://graph.microsoft.com/Files.Read.All offline_access User.Read
 ```
 
-Para detalhes das variáveis de ambiente e configuração Azure, leia `references/configuracao.md`.
+Para detalhes das variáveis de ambiente e configuração Azure, leia [`references/configuracao.md`](references/configuracao.md).
 
 ---
 
@@ -86,7 +86,7 @@ As pastas de vídeo são hardcoded em `pages/api/shared.js` como array `ROOT_FOL
 Cada entrada tem `driveId` e `itemId` — identificados via rota de diagnóstico.
 
 **Como adicionar uma nova pasta raiz:**
-1. Deploy da rota `pages/api/debug-search.js` (ver `references/diagnostico.md`)
+1. Deploy da rota `pages/api/debug-search.js` (ver [`references/diagnostico.md`](references/diagnostico.md))
 2. Acessar `/api/debug-search` logado no site
 3. Localizar o item desejado no JSON retornado → copiar `driveId` e `id`
 4. Adicionar novo objeto em `ROOT_FOLDERS` em `shared.js`
@@ -128,13 +128,13 @@ Tema escuro "media vault". Variáveis CSS em `:root` em `globals.css`:
 - Fonte: Inter (Google Fonts)
 
 Componentes principais em `index.js`: `VideoModal`, `ItemCard`, `MicrosoftLogo`.
-Para referência completa do CSS, leia `references/design.md`.
+Para referência completa do CSS, leia [`references/design.md`](references/design.md).
 
 ---
 
 ## Referências
 
-- `references/arquivos.md` — código e responsabilidade de cada arquivo
-- `references/configuracao.md` — Azure, Vercel, variáveis de ambiente
-- `references/diagnostico.md` — rotas de debug e como descobrir driveId/itemId
-- `references/erros.md` — erros conhecidos e suas soluções
+- [`references/arquivos.md`](references/arquivos.md) — código e responsabilidade de cada arquivo
+- [`references/configuracao.md`](references/configuracao.md) — Azure, Vercel, variáveis de ambiente
+- [`references/diagnostico.md`](references/diagnostico.md) — rotas de debug e como descobrir driveId/itemId
+- [`references/erros.md`](references/erros.md) — erros conhecidos e suas soluções
