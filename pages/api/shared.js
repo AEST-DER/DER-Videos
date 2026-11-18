@@ -10,7 +10,7 @@ const GRAPH_API = "https://graph.microsoft.com/v1.0";
 
 // Cada objeto representa uma pasta raiz de um drive diferente.
 // Para adicionar mais: inclua um novo objeto com driveId e itemId.
-const ROOT_FOLDERS = [
+export const ROOT_FOLDERS = [
   {
     driveId: "b!whoE7FWYLUaYEImzCfTbC3Jdb0ZlNedDrl9AUW8vEtvo5yHX02WrQKkIpzT9z8IZ",
     itemId:  "01QSAFR6WCGH5GRB2XPBCIEBB3WWDRUCSH",
@@ -37,13 +37,12 @@ const ROOT_FOLDERS = [
   }
 ];
 
-const folderNames = {
+export const folderNames = {
   "02 - Produto 2": "LOTE 1",
   "PLANEP - LOTE 2": "LOTE 2 - PLANEP",
   "PLANEP – LOTE 2": "LOTE 2 - PLANEP",
   "PLANEP": "LOTE 2 - PLANEP",
   "LOTE 2": "LOTE 2 - PLANEP"
-  
 };
 
 export default async function handler(req, res) {

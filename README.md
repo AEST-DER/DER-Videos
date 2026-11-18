@@ -21,9 +21,10 @@ onedrive-videos/
 │       │   ├── callback.js     (recebe o code e gera o token)
 │       │   ├── status.js       (verifica se está autenticado)
 │       │   └── logout.js
-│       ├── shared.js           (GET /me/drive/sharedWithMe)
+│       ├── shared.js           (lista pastas raiz configuradas em ROOT_FOLDERS)
 │       ├── children.js         (GET /drives/{id}/items/{id}/children)
-│       └── video-url.js        (renova downloadUrl expirada)
+│       ├── search.js           (GET /drives/{id}/items/{id}/search — busca recursiva multi-drive)
+│       └── video-url.js        (renova downloadUrl expirada via redirect 302)
 └── styles/
     └── globals.css
 ```

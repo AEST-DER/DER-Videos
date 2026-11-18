@@ -32,9 +32,10 @@ Aplicação web desenvolvida para a organização **DER/MG**, permitindo aos usu
   ```
 - **Redirect 302**: A rota `pages/api/video-url.js` obtém a propriedade `@microsoft.graph.downloadUrl` da Microsoft Graph API e responde com `res.redirect(302, downloadUrl)`. Como a URL expira em poucas horas, ela **nunca** deve ser persistida ou cacheada.
 
-### Gerenciamento de Pastas Raiz
-- As pastas raiz exibidas na tela inicial estão configuradas no array `ROOT_FOLDERS` em `pages/api/shared.js`.
+### Gerenciamento de Pastas Raiz e Busca Recursiva
+- As pastas raiz exibidas na tela inicial estão configuradas no array `ROOT_FOLDERS` (e mapeadas por `folderNames`) exportados em `pages/api/shared.js`.
 - Cada pasta raiz requer `{ driveId, itemId }`, mapeados através do diagnóstico da Graph API.
+- A busca recursiva (*deep-search*) é realizada pela rota `pages/api/search.js` utilizando o endpoint nativo `/drives/{driveId}/items/{itemId}/search(q='...')` em paralelo (`Promise.allSettled`) nas pastas raiz ou restrita a uma subárvore (`driveId` e `itemId`).
 
 ### Design System & Estilização
 - Tema escuro ("media vault") implementado via variáveis CSS em `:root` em `styles/globals.css`.

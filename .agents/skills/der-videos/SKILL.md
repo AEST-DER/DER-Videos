@@ -47,6 +47,7 @@ DER-Videos/
 │       │   └── logout.js    ← expira cookies
 │       ├── shared.js        ← retorna cards das pastas raiz
 │       ├── children.js      ← lista filhos de uma pasta
+│       ├── search.js        ← busca recursiva (deep-search) multi-drive
 │       └── video-url.js     ← redireciona 302 para downloadUrl do vídeo
 └── styles/
     └── globals.css          ← design tokens + estilos (tema escuro)

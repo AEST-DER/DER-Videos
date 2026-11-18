@@ -48,7 +48,7 @@ Expira ambos os cookies com `Max-Age=0` e redireciona para `/`.
 ## pages/api/shared.js
 
 Ponto de entrada da navegação. Retorna os metadados das pastas raiz configuradas
-em `ROOT_FOLDERS` (array de `{ driveId, itemId }`).
+em `ROOT_FOLDERS` (array exportado de `{ driveId, itemId }`) e aplica o mapa de nomes amigáveis `folderNames` (também exportado).
 
 Usa `Promise.allSettled` para buscar todas em paralelo.
 Se uma pasta falhar, retorna com `error: true` no item em vez de quebrar as demais.
@@ -81,6 +81,24 @@ Params: `$select=id,name,folder,video,file,size,lastModifiedDateTime,@microsoft.
 ```
 
 Ordenação: pastas primeiro, depois arquivos/vídeos, ambos alfabéticos pt-BR.
+
+---
+
+## pages/api/search.js
+
+Executa busca recursiva (*deep-search*) de pastas e vídeos na Microsoft Graph API.
+
+Query params:
+- `q` (obrigatório): termo de busca
+- `driveId` e `itemId` (opcionais): restringem a busca à subárvore de uma pasta específica. Quando omitidos, a busca é disparada em paralelo (`Promise.allSettled`) em todas as pastas de `ROOT_FOLDERS` exportadas por `pages/api/shared.js`.
+- `type` (opcional): `"all"` (padrão, retorna pastas e vídeos), `"video"` ou `"folder"`.
+
+Endpoint Graph: `GET /drives/{driveId}/items/{itemId}/search(q='{termo}')`
+Params: `$select=id,name,folder,video,file,size,lastModifiedDateTime,parentReference,thumbnails&$top=50`
+
+**Retorna** `{ items }` deduplicado por `driveId:id`, com os mesmos campos normalizados de `children.js` acrescidos de:
+- `originalName`: nome original no OneDrive antes do mapeamento `folderNames`
+- `parentPath`: trilha legível da pasta pai extraída de `parentReference.path` (ex: `"LOTE 1 / 2024 / Trecho A"`)
 
 ---
 
