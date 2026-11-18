@@ -60,11 +60,13 @@
   - `.video` → fundo azul accent translúcido
   - `.file` → fundo cinza translúcido
 - `.item-card-name` — 13px, font-weight 500, 2 linhas máx com `line-clamp`
+- `.item-card-path` — 11px, cor `--text-secondary`, 2 linhas máx com `line-clamp`, exibe a trilha de origem (`↳ LOTE 1 / 2024 / ...`) nos resultados de busca
 - `.item-card-meta` — 11px, cor muted
 - `.item-type-badge` — badge pequeno com tipo em maiúsculas
   - `.badge-folder` → texto warning
   - `.badge-video` → texto accent
   - `.badge-file` → texto muted
+- `.btn-clear-inline` — botão pílula no cabeçalho da seção para limpar a busca ativa
 
 ### Breadcrumb
 - `.breadcrumb` — flex row, gap 6px, animação fadeSlideIn

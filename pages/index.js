@@ -104,9 +104,20 @@ function ItemCard({ item, onClick }) {
 
       <div>
         <div className={`item-type-badge badge-${item.type}`}>
-          {item.type === "folder" ? "PASTA" : item.type === "video" ? "VÍDEO" : "ARQUIVO"}
+          {item.type === "folder"
+            ? item.isGrouped
+              ? `PASTA (${item.sourceCount} ORIGENS)`
+              : "PASTA"
+            : item.type === "video"
+            ? "VÍDEO"
+            : "ARQUIVO"}
         </div>
         <div className="item-card-name">{item.name}</div>
+        {item.parentPath && (
+          <div className="item-card-path" title={item.parentPath}>
+            ↳ {item.parentPath}
+          </div>
+        )}
       </div>
 
       <div className="item-card-meta">
@@ -134,6 +145,9 @@ export default function Home() {
   // Estado da barra de busca com debounce (300ms)
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -199,9 +213,64 @@ export default function Home() {
     if (authenticated) loadItems();
   }, [authenticated, loadItems]);
 
+  // ── Executa busca profunda quando debouncedQuery muda ────────────────────
+  const loadSearchResults = useCallback(async () => {
+    if (!debouncedQuery) {
+      setSearchResults([]);
+      setSearchError(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchError(null);
+
+    try {
+      const params = new URLSearchParams({ q: debouncedQuery });
+      if (navStack.length > 0) {
+        const current = navStack[navStack.length - 1];
+        params.set("driveId", current.driveId);
+        params.set("itemId", current.id);
+      }
+
+      const res = await fetch(`/api/search?${params.toString()}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          setAuthenticated(false);
+          return;
+        }
+        throw new Error(data.error || "Erro ao realizar busca");
+      }
+
+      setSearchResults(data.items || []);
+    } catch (err) {
+      setSearchError(err.message);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [debouncedQuery, navStack]);
+
+  useEffect(() => {
+    if (authenticated) {
+      loadSearchResults();
+    }
+  }, [authenticated, loadSearchResults]);
+
   // ── Handlers ─────────────────────────────────────────────────────────────
+  function clearSearch() {
+    setSearchInput("");
+    setDebouncedQuery("");
+    setSearchResults([]);
+    setSearchError(null);
+  }
+
   function handleItemClick(item) {
     if (item.type === "folder") {
+      if (debouncedQuery) {
+        clearSearch();
+      }
       setNavStack((prev) => [
         ...prev,
         {
@@ -217,6 +286,9 @@ export default function Home() {
   }
 
   function handleBreadcrumbClick(index) {
+    if (debouncedQuery) {
+      clearSearch();
+    }
     // index -1 = voltar para raiz
     setNavStack((prev) => prev.slice(0, index + 1));
   }
@@ -295,14 +367,23 @@ export default function Home() {
       ? "Compartilhados comigo"
       : navStack[navStack.length - 1].name;
 
-  const videoCount = items.filter((i) => i.type === "video").length;
-  const folderCount = items.filter((i) => i.type === "folder").length;
+  const isSearching = debouncedQuery.length > 0;
+  const activeItems = isSearching ? searchResults : items;
+  const activeLoading = isSearching ? searchLoading : loading;
+  const activeError = isSearching ? searchError : error;
+
+  const videoCount = activeItems.filter((i) => i.type === "video").length;
+  const folderCount = activeItems.filter((i) => i.type === "folder").length;
 
   return (
     <>
       <Head>
         <title>
-          {navStack.length > 0 ? `${currentName} — OneDrive Vídeos` : "OneDrive Vídeos"}
+          {isSearching
+            ? `Busca: ${debouncedQuery} — OneDrive Vídeos`
+            : navStack.length > 0
+            ? `${currentName} — OneDrive Vídeos`
+            : "OneDrive Vídeos"}
         </title>
       </Head>
 
@@ -330,8 +411,7 @@ export default function Home() {
               onKeyDown={(e) => {
                 if (e.key === "Escape" && searchInput) {
                   e.stopPropagation();
-                  setSearchInput("");
-                  setDebouncedQuery("");
+                  clearSearch();
                 }
               }}
               aria-label="Buscar vídeos ou pastas"
@@ -341,8 +421,7 @@ export default function Home() {
                 type="button"
                 className="header-search-clear"
                 onClick={() => {
-                  setSearchInput("");
-                  setDebouncedQuery("");
+                  clearSearch();
                   searchInputRef.current?.focus();
                 }}
                 aria-label="Limpar busca"
@@ -355,11 +434,11 @@ export default function Home() {
           <div className="header-actions">
             <button
               className="btn btn-ghost"
-              onClick={loadItems}
-              disabled={loading}
+              onClick={isSearching ? loadSearchResults : loadItems}
+              disabled={activeLoading}
               aria-label="Atualizar lista"
             >
-              {loading ? "⟳" : "↺"} Atualizar
+              {activeLoading ? "⟳" : "↺"} Atualizar
             </button>
             <a href="/api/auth/logout">
               <button className="btn btn-danger">Sair</button>
@@ -372,37 +451,49 @@ export default function Home() {
 
           {/* Breadcrumb */}
           <nav className="breadcrumb" aria-label="Navegação de pastas">
-            <div className={`breadcrumb-item ${navStack.length === 0 ? "active" : ""}`}>
-              {navStack.length === 0 ? (
+            <div className={`breadcrumb-item ${navStack.length === 0 && !isSearching ? "active" : ""}`}>
+              {navStack.length === 0 && !isSearching ? (
                 <span>🏠 Início</span>
               ) : (
                 <button onClick={() => handleBreadcrumbClick(-1)}>🏠 Início</button>
               )}
             </div>
 
-            {navStack.map((entry, i) => (
-              <div key={`${entry.id}-${i}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {navStack.map((entry, i) => {
+              const isLastAndNotSearching = i === navStack.length - 1 && !isSearching;
+              return (
+                <div key={`${entry.id}-${i}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span className="breadcrumb-sep">›</span>
+                  <div className={`breadcrumb-item ${isLastAndNotSearching ? "active" : ""}`}>
+                    {!isLastAndNotSearching ? (
+                      <button onClick={() => handleBreadcrumbClick(i)}>
+                        {entry.name}
+                      </button>
+                    ) : (
+                      <span>{entry.name}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {isSearching && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span className="breadcrumb-sep">›</span>
-                <div className={`breadcrumb-item ${i === navStack.length - 1 ? "active" : ""}`}>
-                  {i < navStack.length - 1 ? (
-                    <button onClick={() => handleBreadcrumbClick(i)}>
-                      {entry.name}
-                    </button>
-                  ) : (
-                    <span>{entry.name}</span>
-                  )}
+                <div className="breadcrumb-item active">
+                  <span>🔍 Busca: &ldquo;{debouncedQuery}&rdquo;</span>
                 </div>
               </div>
-            ))}
+            )}
           </nav>
 
           {/* Erro */}
-          {error && !loading && (
+          {activeError && !activeLoading && (
             <div className="error-banner">
-              ⚠️ {error}
+              ⚠️ {activeError}
               <button
                 className="btn btn-ghost"
-                onClick={loadItems}
+                onClick={isSearching ? loadSearchResults : loadItems}
                 style={{ marginLeft: "auto", flexShrink: 0 }}
               >
                 Tentar novamente
@@ -411,44 +502,83 @@ export default function Home() {
           )}
 
           {/* Loading */}
-          {loading && (
+          {activeLoading && (
             <div className="loading-state">
               <div className="spinner" />
-              <span>Carregando {navStack.length === 0 ? "itens compartilhados" : `"${currentName}"`}…</span>
+              <span>
+                {isSearching
+                  ? `Buscando "${debouncedQuery}" em ${navStack.length === 0 ? "todos os lotes" : `"${currentName}"`}…`
+                  : `Carregando ${navStack.length === 0 ? "itens compartilhados" : `"${currentName}"`}…`}
+              </span>
             </div>
           )}
 
-          {/* Itens */}
-          {!loading && !error && (
+          {/* Itens (Modo Busca ou Modo Navegação Pasta a Pasta) */}
+          {!activeLoading && !activeError && (
             <>
-              {items.length === 0 ? (
+              {activeItems.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-icon">📭</div>
-                  <div className="empty-title">Nenhum item encontrado</div>
+                  <div className="empty-icon">{isSearching ? "🔍" : "📭"}</div>
+                  <div className="empty-title">
+                    {isSearching
+                      ? `Nenhum resultado para "${debouncedQuery}"`
+                      : "Nenhum item encontrado"}
+                  </div>
                   <div className="empty-sub">
-                    {navStack.length === 0
+                    {isSearching
+                      ? navStack.length > 0
+                        ? `Nenhum vídeo ou pasta encontrado dentro de "${currentName}".`
+                        : "Tente buscar por outro nome de vídeo, trecho, rodovia ou lote."
+                      : navStack.length === 0
                       ? "Não há arquivos ou pastas compartilhados com você ainda."
                       : "Esta pasta está vazia."}
                   </div>
+                  {isSearching && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={clearSearch}
+                      style={{ marginTop: 8 }}
+                    >
+                      Limpar busca e voltar
+                    </button>
+                  )}
                 </div>
               ) : (
                 <>
                   <div className="section-header">
                     <span className="section-title">
-                      {navStack.length === 0 ? "Compartilhados comigo" : currentName}
+                      {isSearching
+                        ? `Resultados para "${debouncedQuery}" ${
+                            navStack.length > 0 ? `em ${currentName}` : "(todos os lotes)"
+                          }`
+                        : navStack.length === 0
+                        ? "Compartilhados comigo"
+                        : currentName}
                     </span>
-                    <span className="item-count">
-                      {folderCount > 0 && `${folderCount} pasta${folderCount !== 1 ? "s" : ""}`}
-                      {folderCount > 0 && videoCount > 0 && " · "}
-                      {videoCount > 0 && `${videoCount} vídeo${videoCount !== 1 ? "s" : ""}`}
-                      {folderCount === 0 && videoCount === 0 && `${items.length} ite${items.length !== 1 ? "ns" : "m"}`}
-                    </span>
+                    <div className="section-header-right">
+                      {isSearching && (
+                        <button
+                          type="button"
+                          className="btn-clear-inline"
+                          onClick={clearSearch}
+                        >
+                          Limpar busca ×
+                        </button>
+                      )}
+                      <span className="item-count">
+                        {folderCount > 0 && `${folderCount} pasta${folderCount !== 1 ? "s" : ""}`}
+                        {folderCount > 0 && videoCount > 0 && " · "}
+                        {videoCount > 0 && `${videoCount} vídeo${videoCount !== 1 ? "s" : ""}`}
+                        {folderCount === 0 && videoCount === 0 && `${activeItems.length} ite${activeItems.length !== 1 ? "ns" : "m"}`}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="items-grid">
-                    {items.map((item) => (
+                    {activeItems.map((item) => (
                       <ItemCard
-                        key={item.id}
+                        key={`${item.driveId}:${item.id}`}
                         item={item}
                         onClick={handleItemClick}
                       />

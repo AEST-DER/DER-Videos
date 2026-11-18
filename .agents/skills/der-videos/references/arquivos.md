@@ -119,17 +119,23 @@ Página única com toda a UI. Componentes:
 ### `<Home>` (default export)
 Estado principal:
 - `authenticated` — null (verificando) | true | false
-- `items` — array de itens do nível atual
+- `items` — array de itens do nível atual (navegação pasta a pasta)
 - `navStack` — array de `{ id, driveId, name }` representando o caminho atual
 - `playingVideo` — item de vídeo aberto no player, ou null
 - `searchInput` — valor em tempo real digitado na barra de busca do header
 - `debouncedQuery` — termo de busca estabilizado após debounce de 300ms
+- `searchResults`, `searchLoading`, `searchError` — resultados e estados da busca recursiva via `/api/search`
 
-Lógica de navegação:
-- `navStack.length === 0` → chama `/api/shared` (pastas raiz)
-- `navStack.length > 0` → chama `/api/children` com o último item da pilha
+Lógica de navegação e busca:
+- Quando `debouncedQuery` está vazio (`isSearching === false`):
+  - `navStack.length === 0` → chama `/api/shared` (pastas raiz agrupadas)
+  - `navStack.length > 0` → chama `/api/children` com o último item da pilha
+- Quando `debouncedQuery` possui texto (`isSearching === true`):
+  - Chama `/api/search?q=...` (se `navStack.length > 0`, inclui `driveId` e `itemId` da pasta atual para buscar recursivamente apenas naquela subárvore/grupo; caso contrário, busca em todas as `ROOT_FOLDERS`)
+  - Alterna a área principal para exibir `searchResults`, mantendo o breadcrumb clicável com o indicador `🔍 Busca: "..."`
+  - Clicar num vídeo abre o `<VideoModal>` imediatamente; clicar numa pasta encontrada limpa a busca e entra diretamente naquela pasta (`push` em `navStack`)
 - Clicar numa pasta → push em `navStack`
-- Clicar no breadcrumb → slice em `navStack`
+- Clicar no breadcrumb → limpa a busca ativa (se houver) e faz slice em `navStack`
 
 ### `<VideoModal>`
 Recebe `video` (item) e `onClose`.
@@ -137,7 +143,7 @@ Monta `src` diretamente como `/api/video-url?driveId=...&itemId=...`.
 Fecha com Escape ou clique fora.
 
 ### `<ItemCard>`
-Card clicável. Exibe ícone, badge de tipo, nome e metadados (childCount ou tamanho).
+Card clicável. Exibe ícone, badge de tipo (incluindo indicador `PASTA (N ORIGENS)` quando `item.isGrouped`), nome, trilha de origem `↳ parentPath` (nos resultados da busca) e metadados (`childCount` ou tamanho).
 
 ### `<MicrosoftLogo>`
 SVG inline do logo Microsoft (4 quadrados coloridos).
@@ -150,7 +156,8 @@ Design tokens em `:root`. Modo escuro nativo (não usa media query — sempre es
 Classes principais:
 - `.app-container`, `.header`, `.main-content`
 - `.header-search`, `.header-search-input`, `.header-search-icon`, `.header-search-clear`
-- `.items-grid`, `.item-card`, `.item-card-icon`, `.item-card-name`
+- `.section-header`, `.section-header-right`, `.btn-clear-inline`
+- `.items-grid`, `.item-card`, `.item-card-icon`, `.item-card-name`, `.item-card-path`
 - `.modal-overlay`, `.modal-content`, `.video-wrapper`, `.video-player`
 - `.breadcrumb`, `.breadcrumb-item`, `.breadcrumb-sep`
 - `.loading-state`, `.error-state`, `.empty-state`, `.error-banner`
