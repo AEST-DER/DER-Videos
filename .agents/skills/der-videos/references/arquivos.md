@@ -94,12 +94,12 @@ Query params:
 - `driveId` e `itemId` (opcionais): restringem a busca à subárvore de uma pasta específica (ou grupo de pastas via `parseTargets`). Quando omitidos, a busca é disparada em paralelo (`Promise.allSettled`) em todas as pastas de `ROOT_FOLDERS` exportadas por `pages/api/shared.js` (incluindo verificação das próprias pastas raiz pelo nome original ou nome mapeado em `folderNames`).
 - `type` (opcional): `"all"` (padrão, retorna pastas e vídeos), `"video"` ou `"folder"`.
 
-**Estratégia Híbrida (Graph Search + Fallback BFS via `/children`):**
-1. **Busca nativa (`GET /drives/{driveId}/items/{itemId}/search(q='{termo}')`)**:
-   - Params: `$select=id,name,folder,video,file,size,lastModifiedDateTime,parentReference&$top=50` (sem `thumbnails`, pois a Graph API retorna HTTP 400 quando `thumbnails` é passado em `$select` no endpoint `/search`).
-2. **Fallback BFS concorrente (`crawlTargetsBfs`)**:
-   - Em pastas compartilhadas de outros usuários no OneDrive for Business, o endpoint `/items/{itemId}/search` frequentemente retorna `value: []` mesmo quando existem subitens, ou não encontra substrings parciais (como `"km12"` dentro de `"video_km12.mp4"`).
-   - Quando `/search` não retorna correspondências para um alvo, `search.js` percorre a árvore de pastas em largura (BFS concorrente por nível via `/children`, até `MAX_BFS_DEPTH = 6`, `MAX_BFS_REQUESTS = 45` e orçamento de tempo de `6.5s` para respeitar o limite de 10s da Vercel Hobby) e filtra os nomes localmente sem diferenciar acentos ou maiúsculas/minúsculas (`normalizeText`).
+**Estratégia Híbrida (BFS Concorrente via `/children` + Graph `/search`):**
+1. **Metadados de Nível 0**: Consulta as pastas-alvo para obter seus nomes de exibição (incluindo mapeamento `folderNames`) e compor a trilha `parentPath`.
+2. **Varredura BFS concorrente (`crawlTargetsBfs`) e Graph `/search` em paralelo**:
+   - Usa exatamente o mesmo `$select` de `children.js` (`id,name,folder,video,file,size,lastModifiedDateTime`), sem `thumbnails` nem `parentReference` (que a Graph API omite ou rejeita em drives compartilhados de outros usuários), propagando `driveId` e `trail` diretamente do nó pai.
+   - Percorre até `MAX_BFS_DEPTH = 8` níveis, `MAX_BFS_REQUESTS = 120` requisições (em lotes concorrentes de 20) e orçamento de `7.5s`.
+   - `matchesQuery` compara o termo de busca exclusivamente contra o nome do próprio item (`name` e `originalName`), normalizando acentos, caixa e separadores (`_`, `-`, `.`), evitando que todos os filhos de uma pasta herdem falsos positivos pelo caminho da pasta pai.
 
 **Retorna** `{ items }` deduplicado e com pastas homônimas mescladas (`mergeDuplicateSearchFolders`), contendo os campos normalizados de `children.js` acrescidos de:
 - `originalName`: nome original no OneDrive antes do mapeamento `folderNames`

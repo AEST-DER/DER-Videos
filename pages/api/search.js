@@ -10,12 +10,11 @@
  *   - type:    (Opcional) "video" | "folder" | "all" (padrão: "all", exclui arquivos comuns que não são vídeo)
  *
  * Estratégia Híbrida de Deep-Search (resiliente às limitações do OneDrive for Business):
- *   1. Tenta o endpoint de busca por pasta `/drives/{driveId}/items/{itemId}/search(q='{termo}')`
- *      (sem `thumbnails` no `$select`, pois a Graph API rejeita `thumbnails` em `/search` com HTTP 400).
- *   2. Se o índice do SharePoint não retornar resultados para pastas compartilhadas de outros usuários
- *      (comportamento conhecido da Graph API onde `/items/{id}/search` retorna `[]` em drives externos),
- *      executa uma varredura recursiva rápida em largura (BFS concorrente) via `/children` com filtro local
- *      insensível a acentos/maiúsculas e orçamento de tempo seguro para a Vercel.
+ *   1. Executa em paralelo a consulta rápida `/drives/{driveId}/items/{itemId}/search(q='{termo}')`
+ *      e uma varredura recursiva rápida em largura (BFS concorrente) via `/children`.
+ *   2. No `/children` do BFS, usa o mesmo `$select` testado e aprovado de `children.js`
+ *      (sem `parentReference`, que é omitido/bloqueado pela Graph API em drives compartilhados de terceiros),
+ *      propagando o `driveId` e a trilha (`trail`) diretamente a partir do nó pai.
  */
 
 import { ROOT_FOLDERS, folderNames, normalizeGroupKey } from "./shared";
@@ -24,9 +23,10 @@ import { parseTargets } from "./children";
 const GRAPH_API = "https://graph.microsoft.com/v1.0";
 
 // Limites de segurança para a varredura BFS dentro do timeout de 10s da Vercel Hobby
-const MAX_BFS_DEPTH = 6;
-const MAX_BFS_REQUESTS = 45;
-const BFS_TIME_BUDGET_MS = 6500;
+const MAX_BFS_DEPTH = 8;
+const MAX_BFS_REQUESTS = 120;
+const BFS_TIME_BUDGET_MS = 7500;
+const BFS_CONCURRENCY_PER_BATCH = 20;
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -64,68 +64,36 @@ export default async function handler(req, res) {
   const escapedQuery = encodeURIComponent(query.replace(/'/g, "''"));
 
   try {
-    // 0. Se a busca é global (na raiz), também verifica as próprias pastas raiz (ROOT_FOLDERS),
-    //    pois o usuário pode pesquisar pelo nome amigável do lote (ex: "LOTE 1", "PLANEP")
-    //    ou pelo nome original da pasta raiz.
-    const rootMatches = [];
-    if (isRootSearch) {
-      const rootMetaResults = await Promise.allSettled(
-        targets.map(async (target) => {
-          const url = `${GRAPH_API}/drives/${target.driveId}/items/${target.itemId}?$select=id,name,folder,lastModifiedDateTime,parentReference`;
-          const r = await fetch(url, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          if (!r.ok) return null;
-          return { driveId: target.driveId, data: await r.json() };
-        })
-      );
-
-      for (const r of rootMetaResults) {
-        if (r.status === "fulfilled" && r.value?.data) {
-          const item = normalizeSearchResult(r.value.data, r.value.driveId, "Início");
-          if (matchesQuery(item, normalizedQuery) && matchesTypeFilter(item, type)) {
-            rootMatches.push(item);
-          }
-        }
-      }
-    }
-    // 1. Tenta o endpoint nativo de search da Graph API em cada alvo
-    // IMPORTANTE: Não incluir `thumbnails` no $select de /search (causa HTTP 400 na Graph API)
-    const searchResults = await Promise.allSettled(
+    // 1. Consulta os metadados das pastas-alvo para:
+    //    - Obter o nome amigável da raiz de cada alvo (para compor a trilha `parentPath` no BFS)
+    //    - Permitir que buscas na raiz também encontrem as próprias pastas de nível 0
+    const targetMetaResults = await Promise.allSettled(
       targets.map(async (target) => {
-        const url =
-          `${GRAPH_API}/drives/${target.driveId}/items/${target.itemId}/search(q='${escapedQuery}')` +
-          `?$select=id,name,folder,video,file,size,lastModifiedDateTime,parentReference` +
-          `&$top=50`;
-
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
+        const url = `${GRAPH_API}/drives/${target.driveId}/items/${target.itemId}?$select=id,name,folder,lastModifiedDateTime`;
+        const r = await fetch(url, {
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          const err = new Error(
-            `${response.status}: ${errData.error?.message || "Erro na Graph API"}`
-          );
-          err.status = response.status;
+        if (!r.ok) {
+          const err = new Error(`HTTP ${r.status}`);
+          err.status = r.status;
           throw err;
         }
-
-        const data = await response.json();
+        const data = await r.json();
+        const rawName = (data.name || "").trim();
+        const displayName = folderNames[rawName] || folderNames[data.name] || rawName;
         return {
-          target,
-          items: data.value || [],
+          driveId: target.driveId,
+          itemId: target.itemId,
+          data,
+          displayName,
         };
       })
     );
 
     // Se todas as chamadas falharam com 401, propaga 401 para o frontend renovar sessão
     const allUnauthorized =
-      searchResults.length > 0 &&
-      searchResults.every((r) => r.status === "rejected" && r.reason?.status === 401);
+      targetMetaResults.length > 0 &&
+      targetMetaResults.every((r) => r.status === "rejected" && r.reason?.status === 401);
 
     if (allUnauthorized) {
       return res.status(401).json({ error: "Token expirado. Faça login novamente." });
@@ -133,83 +101,98 @@ export default async function handler(req, res) {
 
     const seenItems = new Set();
     const collectedItems = [];
-    const targetsNeedingBfs = [];
+    const accessibleTargets = [];
 
-    for (const rootItem of rootMatches) {
-      const uniqueKey = `${rootItem.driveId}:${rootItem.id}`;
-      if (!seenItems.has(uniqueKey)) {
-        seenItems.add(uniqueKey);
-        collectedItems.push(rootItem);
+    for (let i = 0; i < targetMetaResults.length; i++) {
+      const r = targetMetaResults[i];
+      const fallbackTarget = targets[i];
+
+      if (r.status === "fulfilled" && r.value) {
+        const { driveId: tDriveId, itemId: tItemId, data, displayName } = r.value;
+        accessibleTargets.push({
+          driveId: tDriveId,
+          itemId: tItemId,
+          trail: displayName || "",
+        });
+
+        // Se a busca começou na Home, verifica se a própria pasta raiz corresponde ao termo
+        if (isRootSearch) {
+          const rootItem = normalizeSearchResult(data, tDriveId, "Início");
+          if (matchesQuery(rootItem, normalizedQuery) && matchesTypeFilter(rootItem, type)) {
+            const uniqueKey = `${rootItem.driveId}:${rootItem.id}`;
+            if (!seenItems.has(uniqueKey)) {
+              seenItems.add(uniqueKey);
+              collectedItems.push(rootItem);
+            }
+          }
+        }
+      } else if (r.reason?.status !== 401 && r.reason?.status !== 403 && r.reason?.status !== 404) {
+        accessibleTargets.push({
+          driveId: fallbackTarget.driveId,
+          itemId: fallbackTarget.itemId,
+          trail: "",
+        });
       }
     }
 
-    for (let i = 0; i < searchResults.length; i++) {
-      const result = searchResults[i];
-      const target = targets[i];
+    // 2. Executa em paralelo:
+    //    (A) Endpoint `/search` da Graph API (para casos onde o índice do SharePoint responde)
+    //    (B) Varredura recursiva rápida em largura (BFS) via `/children` (que garante encontrar
+    //        subpastas e vídeos em qualquer nível de profundidade mesmo em drives compartilhados onde `/search` falha)
+    const [graphSearchSettled, bfsItems] = await Promise.all([
+      Promise.allSettled(
+        accessibleTargets.map(async (target) => {
+          const url =
+            `${GRAPH_API}/drives/${target.driveId}/items/${target.itemId}/search(q='${escapedQuery}')` +
+            `?$select=id,name,folder,video,file,size,lastModifiedDateTime` +
+            `&$top=50`;
 
-      if (result.status !== "fulfilled") {
-        // Se falhou por erro diferente de 401/403/404, tenta fallback BFS nesse alvo
-        const status = result.reason?.status;
-        if (status !== 401 && status !== 403 && status !== 404) {
-          targetsNeedingBfs.push(target);
-        }
-        continue;
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!response.ok) return { target, items: [] };
+          const data = await response.json();
+          return { target, items: data.value || [] };
+        })
+      ),
+      crawlTargetsBfs(accessibleTargets, accessToken, normalizedQuery, type),
+    ]);
+
+    // Consolida resultados do BFS (que possuem a trilha hierárquica exata)
+    for (const item of bfsItems) {
+      const uniqueKey = `${item.driveId}:${item.id}`;
+      if (!seenItems.has(uniqueKey)) {
+        seenItems.add(uniqueKey);
+        collectedItems.push(item);
       }
+    }
 
-      const { items } = result.value;
-
-      // No OneDrive for Business / SharePoint, /items/{id}/search frequentemente retorna []
-      // para pastas compartilhadas ou subitens cujo nome foi mapeado em folderNames.
-      // Nesses casos, acionamos a varredura BFS para garantir que nenhum item existente passe despercebido.
-      if (items.length === 0) {
-        targetsNeedingBfs.push(target);
-        continue;
-      }
+    // Consolida resultados adicionais do Graph `/search` (caso estejam além da profundidade do BFS)
+    for (const res of graphSearchSettled) {
+      if (res.status !== "fulfilled") continue;
+      const { target, items } = res.value;
 
       for (const rawItem of items) {
-        const itemDriveId = rawItem.parentReference?.driveId || target.driveId;
-        const uniqueKey = `${itemDriveId}:${rawItem.id}`;
+        // Ignora a própria pasta raiz se o `/search` a devolver como nó inicial
+        if (rawItem.id === target.itemId) continue;
+
+        const uniqueKey = `${target.driveId}:${rawItem.id}`;
         if (seenItems.has(uniqueKey)) continue;
 
-        const item = normalizeSearchResult(rawItem, itemDriveId);
+        const item = normalizeSearchResult(rawItem, target.driveId, target.trail);
         if (!matchesQuery(item, normalizedQuery)) continue;
         if (!matchesTypeFilter(item, type)) continue;
 
         seenItems.add(uniqueKey);
         collectedItems.push(item);
       }
-
-      // Se nenhum subitem foi encontrado neste alvo via /search, inclui no BFS
-      const foundInTarget = items.some((rawItem) => {
-        const itemDriveId = rawItem.parentReference?.driveId || target.driveId;
-        const item = normalizeSearchResult(rawItem, itemDriveId);
-        return matchesQuery(item, normalizedQuery) && matchesTypeFilter(item, type);
-      });
-      if (!foundInTarget) {
-        targetsNeedingBfs.push(target);
-      }
     }
 
-    // 2. Fallback / Complemento: Varredura recursiva rápida em largura (BFS) via /children
-    // Resolve 100% dos casos em que o índice /search do OneDrive de outro usuário retorna vazio
-    if (targetsNeedingBfs.length > 0) {
-      const bfsItems = await crawlTargetsBfs(
-        targetsNeedingBfs,
-        accessToken,
-        normalizedQuery,
-        type
-      );
-
-      for (const item of bfsItems) {
-        const uniqueKey = `${item.driveId}:${item.id}`;
-        if (!seenItems.has(uniqueKey)) {
-          seenItems.add(uniqueKey);
-          collectedItems.push(item);
-        }
-      }
-    }
-
-    // Agrupa pastas de mesmo nome que estejam no mesmo caminho lógico ou nível
+    // Agrupa pastas de mesmo nome que estejam no mesmo caminho lógico
     const finalItems = mergeDuplicateSearchFolders(collectedItems);
 
     // Ordena: pastas primeiro, depois vídeos, ambos em ordem alfabética pt-BR
@@ -228,7 +211,7 @@ export default async function handler(req, res) {
 
 /**
  * Varredura em largura (BFS) concorrente por nível de profundidade.
- * Percorre as pastas via `/children` respeitando limite de requisições e orçamento de tempo.
+ * Usa exatamente o mesmo formato de chamada `/children` de `pages/api/children.js`.
  */
 async function crawlTargetsBfs(targets, accessToken, normalizedQuery, type) {
   const startTime = Date.now();
@@ -236,73 +219,84 @@ async function crawlTargetsBfs(targets, accessToken, normalizedQuery, type) {
   const matched = [];
   const visitedFolders = new Set();
 
-  // Inicializa a fila do nível 0 com os alvos de busca
   let currentQueue = targets.map((t) => ({
     driveId: t.driveId,
     itemId: t.itemId,
-    trail: "",
+    trail: t.trail || "",
   }));
 
   for (let depth = 0; depth < MAX_BFS_DEPTH && currentQueue.length > 0; depth++) {
     if (Date.now() - startTime > BFS_TIME_BUDGET_MS) break;
     if (requestCount >= MAX_BFS_REQUESTS) break;
 
-    const remainingBudget = MAX_BFS_REQUESTS - requestCount;
-    const batch = currentQueue.slice(0, remainingBudget);
-    requestCount += batch.length;
-
     const nextQueue = [];
 
-    const batchResults = await Promise.allSettled(
-      batch.map(async (node) => {
+    // Processa a fila do nível atual em sub-lotes concorrentes
+    for (let i = 0; i < currentQueue.length; i += BFS_CONCURRENCY_PER_BATCH) {
+      if (Date.now() - startTime > BFS_TIME_BUDGET_MS) break;
+      if (requestCount >= MAX_BFS_REQUESTS) break;
+
+      const remainingBudget = MAX_BFS_REQUESTS - requestCount;
+      const chunk = currentQueue.slice(i, i + Math.min(BFS_CONCURRENCY_PER_BATCH, remainingBudget));
+
+      const nodesToFetch = [];
+      for (const node of chunk) {
         const folderKey = `${node.driveId}:${node.itemId}`;
-        if (visitedFolders.has(folderKey)) return { node, children: [] };
-        visitedFolders.add(folderKey);
-
-        const url =
-          `${GRAPH_API}/drives/${node.driveId}/items/${node.itemId}/children` +
-          `?$select=id,name,folder,video,file,size,lastModifiedDateTime,parentReference` +
-          `&$top=200`;
-
-        const response = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          return { node, children: [] };
+        if (!visitedFolders.has(folderKey)) {
+          visitedFolders.add(folderKey);
+          nodesToFetch.push(node);
         }
+      }
 
-        const data = await response.json();
-        return { node, children: data.value || [] };
-      })
-    );
+      if (nodesToFetch.length === 0) continue;
+      requestCount += nodesToFetch.length;
 
-    for (const res of batchResults) {
-      if (res.status !== "fulfilled") continue;
-      const { node, children } = res.value;
+      const batchResults = await Promise.allSettled(
+        nodesToFetch.map(async (node) => {
+          const url =
+            `${GRAPH_API}/drives/${node.driveId}/items/${node.itemId}/children` +
+            `?$select=id,name,folder,video,file,size,lastModifiedDateTime` +
+            `&$top=200`;
 
-      for (const rawChild of children) {
-        const childDriveId = rawChild.parentReference?.driveId || node.driveId;
-        const item = normalizeSearchResult(rawChild, childDriveId, node.trail);
-
-        if (matchesQuery(item, normalizedQuery) && matchesTypeFilter(item, type)) {
-          matched.push(item);
-        }
-
-        // Se for pasta, enfileira para explorar o próximo nível de profundidade
-        if (item.type === "folder") {
-          const nextTrail = item.parentPath
-            ? `${item.parentPath} / ${item.name}`
-            : item.name;
-
-          nextQueue.push({
-            driveId: childDriveId,
-            itemId: item.id,
-            trail: nextTrail,
+          const response = await fetch(url, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
           });
+
+          if (!response.ok) {
+            return { node, children: [] };
+          }
+
+          const data = await response.json();
+          return { node, children: data.value || [] };
+        })
+      );
+
+      for (const res of batchResults) {
+        if (res.status !== "fulfilled") continue;
+        const { node, children } = res.value;
+
+        for (const rawChild of children) {
+          const item = normalizeSearchResult(rawChild, node.driveId, node.trail);
+
+          if (matchesQuery(item, normalizedQuery) && matchesTypeFilter(item, type)) {
+            matched.push(item);
+          }
+
+          // Se for subpasta, enfileira para explorar o próximo nível de profundidade
+          if (item.type === "folder") {
+            const nextTrail = node.trail
+              ? `${node.trail} / ${item.name}`
+              : item.name;
+
+            nextQueue.push({
+              driveId: node.driveId,
+              itemId: item.id,
+              trail: nextTrail,
+            });
+          }
         }
       }
     }
@@ -313,12 +307,11 @@ async function crawlTargetsBfs(targets, accessToken, normalizedQuery, type) {
   return matched;
 }
 
-function normalizeSearchResult(item, driveId, fallbackTrail = "") {
+function normalizeSearchResult(item, driveId, trail = "") {
   const isFolder = !!item.folder;
   const isVideo = !!item.video || isVideoFile(item.name || "");
   const rawName = (item.name || "Sem nome").trim();
   const displayName = isFolder ? folderNames[rawName] || rawName : rawName;
-  const parentPath = formatParentPath(item.parentReference?.path) || fallbackTrail;
 
   return {
     id: item.id,
@@ -330,29 +323,33 @@ function normalizeSearchResult(item, driveId, fallbackTrail = "") {
     lastModified: item.lastModifiedDateTime || null,
     thumbnailUrl: null,
     childCount: item.folder?.childCount ?? null,
-    parentPath,
+    parentPath: trail,
   };
 }
 
 /**
- * Remove acentos, converte para minúsculas e normaliza espaços
- * para permitir busca tolerante a acentuação e caixa.
+ * Remove acentos, converte para minúsculas e normaliza separadores (_, -, .)
+ * para permitir busca tolerante a acentuação, caixa e pontuação.
  */
 function normalizeText(str) {
   return (str || "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/[_\-.]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function matchesQuery(item, normalizedQuery) {
   if (!normalizedQuery) return true;
-  const terms = normalizedQuery.split(/\s+/).filter(Boolean);
-  const haystack = normalizeText(
-    `${item.name} ${item.originalName || ""} ${item.parentPath || ""}`
+  const terms = normalizedQuery.split(" ").filter(Boolean);
+  // Compara tanto com separadores normalizados quanto com a string contínua
+  const haystackSpaced = normalizeText(`${item.name} ${item.originalName || ""}`);
+  const haystackCompact = haystackSpaced.replace(/\s+/g, "");
+  return terms.every(
+    (term) => haystackSpaced.includes(term) || haystackCompact.includes(term)
   );
-  return terms.every((term) => haystack.includes(term));
 }
 
 function matchesTypeFilter(item, type) {
@@ -402,33 +399,6 @@ function mergeDuplicateSearchFolders(items) {
   });
 
   return [...mergedFolders, ...nonFolders];
-}
-
-/**
- * Converte o parentReference.path da Graph API
- * (ex: "/drives/b!.../root:/02 - Produto 2/2024/Trecho A")
- * em uma trilha legível (ex: "LOTE 1 / 2024 / Trecho A").
- */
-function formatParentPath(rawPath) {
-  if (!rawPath) return "";
-
-  const rootMarker = "root:";
-  const idx = rawPath.indexOf(rootMarker);
-  const relative = idx !== -1 ? rawPath.slice(idx + rootMarker.length) : rawPath;
-
-  const segments = relative
-    .split("/")
-    .filter(Boolean)
-    .map((seg) => {
-      try {
-        const decoded = decodeURIComponent(seg);
-        return folderNames[decoded] || decoded;
-      } catch {
-        return folderNames[seg] || seg;
-      }
-    });
-
-  return segments.join(" / ");
 }
 
 function isVideoFile(name) {
