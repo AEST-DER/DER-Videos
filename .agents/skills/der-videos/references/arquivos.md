@@ -64,7 +64,8 @@ Lista o conteúdo de qualquer pasta (ou de um grupo de pastas homônimas), receb
 - Quando `driveId === "group"` (ou `itemId` contém múltiplos pares `driveId:itemId` separados por vírgula), usa `parseTargets(driveId, itemId)` para buscar os filhos de todas as pastas do grupo em paralelo (`Promise.allSettled`) e mescla subpastas de mesmo nome automaticamente, mantendo o agrupamento em qualquer profundidade da árvore.
 
 Endpoint Graph: `GET /drives/{driveId}/items/{itemId}/children`
-Params: `$select=id,name,folder,video,file,size,lastModifiedDateTime,@microsoft.graph.downloadUrl,thumbnails&$top=100`
+Params: `$select=id,name,folder,video,file,size,lastModifiedDateTime,@microsoft.graph.downloadUrl&$top=100`
+*(Nota: `thumbnails` não deve ser incluído no `$select`, pois é uma relação de navegação na Graph API e não uma propriedade escalar).*
 
 **Retorna** array normalizado com campos:
 ```js
@@ -86,19 +87,23 @@ Ordenação: pastas primeiro, depois arquivos/vídeos, ambos alfabéticos pt-BR.
 
 ## pages/api/search.js
 
-Executa busca recursiva (*deep-search*) de pastas e vídeos na Microsoft Graph API.
+Executa busca recursiva (*deep-search*) híbrida de pastas e vídeos na Microsoft Graph API.
 
 Query params:
 - `q` (obrigatório): termo de busca
-- `driveId` e `itemId` (opcionais): restringem a busca à subárvore de uma pasta específica. Quando omitidos, a busca é disparada em paralelo (`Promise.allSettled`) em todas as pastas de `ROOT_FOLDERS` exportadas por `pages/api/shared.js`.
+- `driveId` e `itemId` (opcionais): restringem a busca à subárvore de uma pasta específica (ou grupo de pastas via `parseTargets`). Quando omitidos, a busca é disparada em paralelo (`Promise.allSettled`) em todas as pastas de `ROOT_FOLDERS` exportadas por `pages/api/shared.js` (incluindo verificação das próprias pastas raiz pelo nome original ou nome mapeado em `folderNames`).
 - `type` (opcional): `"all"` (padrão, retorna pastas e vídeos), `"video"` ou `"folder"`.
 
-Endpoint Graph: `GET /drives/{driveId}/items/{itemId}/search(q='{termo}')`
-Params: `$select=id,name,folder,video,file,size,lastModifiedDateTime,parentReference,thumbnails&$top=50`
+**Estratégia Híbrida (Graph Search + Fallback BFS via `/children`):**
+1. **Busca nativa (`GET /drives/{driveId}/items/{itemId}/search(q='{termo}')`)**:
+   - Params: `$select=id,name,folder,video,file,size,lastModifiedDateTime,parentReference&$top=50` (sem `thumbnails`, pois a Graph API retorna HTTP 400 quando `thumbnails` é passado em `$select` no endpoint `/search`).
+2. **Fallback BFS concorrente (`crawlTargetsBfs`)**:
+   - Em pastas compartilhadas de outros usuários no OneDrive for Business, o endpoint `/items/{itemId}/search` frequentemente retorna `value: []` mesmo quando existem subitens, ou não encontra substrings parciais (como `"km12"` dentro de `"video_km12.mp4"`).
+   - Quando `/search` não retorna correspondências para um alvo, `search.js` percorre a árvore de pastas em largura (BFS concorrente por nível via `/children`, até `MAX_BFS_DEPTH = 6`, `MAX_BFS_REQUESTS = 45` e orçamento de tempo de `6.5s` para respeitar o limite de 10s da Vercel Hobby) e filtra os nomes localmente sem diferenciar acentos ou maiúsculas/minúsculas (`normalizeText`).
 
-**Retorna** `{ items }` deduplicado por `driveId:id`, com os mesmos campos normalizados de `children.js` acrescidos de:
+**Retorna** `{ items }` deduplicado e com pastas homônimas mescladas (`mergeDuplicateSearchFolders`), contendo os campos normalizados de `children.js` acrescidos de:
 - `originalName`: nome original no OneDrive antes do mapeamento `folderNames`
-- `parentPath`: trilha legível da pasta pai extraída de `parentReference.path` (ex: `"LOTE 1 / 2024 / Trecho A"`)
+- `parentPath`: trilha legível da pasta pai extraída de `parentReference.path` ou construída durante o BFS (ex: `"LOTE 1 / 2024 / Trecho A"`)
 
 ---
 

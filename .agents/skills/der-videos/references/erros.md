@@ -120,3 +120,15 @@ e verificar se `@microsoft.graph.downloadUrl` aparece nos itens de vídeo.
 
 Se não aparecer, pode ser necessário usar o endpoint `/content` da Graph API
 com redirect, mas isso requer configuração adicional de CORS no Azure.
+
+---
+
+## Busca (`/api/search`) retorna vazio para itens que existem nas pastas compartilhadas
+
+**Causas identificadas na Microsoft Graph API:**
+1. **`thumbnails` no `$select` de `/search`**: Na Graph API, `thumbnails` é uma relação de navegação (não uma propriedade escalar do `driveItem`). Incluir `thumbnails` em `?$select=...` no endpoint `/drives/{driveId}/items/{itemId}/search(q='...')` faz a Graph API responder com `400 Bad Request`. Como as chamadas usavam `Promise.allSettled`, a falha era engolida como erro parcial e retornava `items: []`.
+2. **Limitação do `/items/{itemId}/search` em drives compartilhados de outros usuários**: No OneDrive for Business / SharePoint, o índice de busca escopado a um `itemId` frequentemente retorna `value: []` quando o usuário logado não é o proprietário do drive ou quando busca por trechos parciais de nomes com `_` ou `-` (tokenização prefixada do SharePoint) ou nomes traduzidos pelo mapa `folderNames` (ex: `"LOTE 1"` vs `"02 - Produto 2"`).
+
+**Solução aplicada em `pages/api/search.js`:**
+- Removido `thumbnails` do `$select` em `/api/search.js` e `/api/children.js`.
+- Implementada busca híbrida: tenta `/search` e, para qualquer alvo onde o índice da Microsoft retorne vazio, executa automaticamente uma varredura recursiva rápida em largura (BFS concorrente por nível via `/children`, com orçamento de 6,5s e filtro local insensível a acentos/maiúsculas), além de testar as próprias pastas raiz na busca global.

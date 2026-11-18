@@ -36,11 +36,13 @@ export default async function handler(req, res) {
   const targets = parseTargets(driveId, itemId);
 
   try {
+    // Busca os filhos da pasta. O $select limita os campos para economizar banda.
+    // Nota: não incluir `thumbnails` no $select direto (é um relacionamento e não propriedade escalar; usá-lo com $expand ou $select em itens compartilhados pode causar erro 400 na Graph API).
     const results = await Promise.allSettled(
       targets.map(async (target) => {
         const url =
           `${GRAPH_API}/drives/${target.driveId}/items/${target.itemId}/children` +
-          `?$select=id,name,folder,video,file,size,lastModifiedDateTime,@microsoft.graph.downloadUrl,thumbnails` +
+          `?$select=id,name,folder,video,file,size,lastModifiedDateTime,@microsoft.graph.downloadUrl` +
           `&$top=100`;
 
         const response = await fetch(url, {
