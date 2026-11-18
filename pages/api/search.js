@@ -14,6 +14,7 @@
  */
 
 import { ROOT_FOLDERS, folderNames } from "./shared";
+import { parseTargets } from "./children";
 
 const GRAPH_API = "https://graph.microsoft.com/v1.0";
 
@@ -34,10 +35,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "O parâmetro de busca 'q' é obrigatório." });
   }
 
-  // Define os alvos de busca: uma subárvore específica ou todas as pastas raiz (multi-drive)
+  // Define os alvos de busca: uma subárvore específica (ou grupo de pastas) ou todas as pastas raiz (multi-drive)
   const targets =
     driveId && itemId
-      ? [{ driveId, itemId }]
+      ? parseTargets(driveId, itemId)
       : ROOT_FOLDERS;
 
   // Escapa aspas simples para a sintaxe OData search(q='...') e aplica URL encode

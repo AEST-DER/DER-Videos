@@ -43,9 +43,12 @@
 
 ## Componentes e Classes
 
-### Layout
+### Layout e Busca no Header
 - `.app-container` — flex column, min-height 100vh
 - `.header` — sticky top, 60px altura, blur backdrop
+- `.header-search` — container flexível da barra de busca no header (max-width 440px; ocupa 100% da largura na segunda linha em telas ≤640px)
+- `.header-search-input` — campo de busca com fundo `--bg-card`, foco com `--border-accent` e `--accent-glow`
+- `.header-search-clear` — botão circular `×` para limpar rapidamente o termo digitado
 - `.main-content` — padding 32px, max-width 1280px, centralizado
 
 ### Cards de Item

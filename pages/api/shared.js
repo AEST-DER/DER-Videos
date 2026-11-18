@@ -2,8 +2,9 @@
  * pages/api/shared.js
  *
  * Retorna a lista de pastas raiz configuradas.
- * Cada entrada vira um card na tela inicial — ao clicar,
- * o frontend navega para dentro via /api/children normalmente.
+ * Pastas de diferentes drives que resultam no mesmo nome de exibição (via folderNames
+ * ou nome idêntico) são agrupadas automaticamente em um único card na tela inicial.
+ * Ao clicar, o frontend navega para dentro via /api/children normalmente.
  */
 
 const GRAPH_API = "https://graph.microsoft.com/v1.0";
@@ -45,33 +46,70 @@ export const folderNames = {
   "LOTE 2": "LOTE 2 - PLANEP"
 };
 
+/**
+ * Normaliza o nome de exibição para usar como chave de agrupamento
+ * (case-insensitive, remove espaços extras e uniformiza travessões/hifens).
+ */
+export function normalizeGroupKey(name) {
+  return (name || "")
+    .trim()
+    .replace(/\s*[–—-]\s*/g, " - ")
+    .replace(/\s+/g, " ")
+    .toUpperCase();
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).json({ error: "Método não permitido" });
 
   const token = getCookie(req, "access_token");
   if (!token) return res.status(401).json({ error: "Não autenticado." });
 
+  // Deduplica entradas idênticas em ROOT_FOLDERS por driveId:itemId
+  const uniqueRoots = [];
+  const seenRoots = new Set();
+  for (const root of ROOT_FOLDERS) {
+    const key = `${root.driveId}:${root.itemId}`;
+    if (!seenRoots.has(key)) {
+      seenRoots.add(key);
+      uniqueRoots.push(root);
+    }
+  }
+
   // Busca os metadados de cada pasta raiz em paralelo
   const results = await Promise.allSettled(
-    ROOT_FOLDERS.map(({ driveId, itemId }) =>
+    uniqueRoots.map(({ driveId, itemId }) =>
       fetch(`${GRAPH_API}/drives/${driveId}/items/${itemId}?$select=id,name,folder,lastModifiedDateTime`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then(async (r) => {
         if (!r.ok) {
-          const e = await r.json();
-          throw new Error(`${r.status}: ${e.error?.message || "Erro na Graph API"}`);
+          const e = await r.json().catch(() => ({}));
+          const err = new Error(`${r.status}: ${e.error?.message || "Erro na Graph API"}`);
+          err.status = r.status;
+          throw err;
         }
         return { driveId, data: await r.json() };
       })
     )
   );
 
-  const items = results.map((result, index) => {
+  // Se todas as chamadas falharam com 401, retorna 401 para o frontend renovar a sessão
+  const allUnauthorized =
+    results.length > 0 &&
+    results.every((r) => r.status === "rejected" && r.reason?.status === 401);
+
+  if (allUnauthorized) {
+    return res.status(401).json({ error: "Token expirado. Faça login novamente." });
+  }
+
+  const rawItems = results.map((result, index) => {
     if (result.status === "fulfilled") {
       const { driveId, data } = result.value;
+      const originalName = (data.name || "").trim();
+      const displayName = folderNames[originalName] || folderNames[data.name] || originalName || `Pasta ${index + 1}`;
       return {
         id: data.id,
-        name: folderNames[data.name] || data.name || `Pasta ${index + 1}`,
+        name: displayName,
+        originalName: originalName || displayName,
         type: "folder",
         driveId,
         childCount: data.folder?.childCount ?? null,
@@ -80,13 +118,13 @@ export default async function handler(req, res) {
         downloadUrl: null,
       };
     } else {
-      // Pasta inacessível — mostra com erro em vez de quebrar tudo
       console.error(`Erro ao buscar pasta raiz ${index}:`, result.reason?.message);
       return {
-        id: ROOT_FOLDERS[index].itemId,
+        id: uniqueRoots[index].itemId,
         name: `Pasta ${index + 1} (inacessível)`,
+        originalName: `Pasta ${index + 1}`,
         type: "folder",
-        driveId: ROOT_FOLDERS[index].driveId,
+        driveId: uniqueRoots[index].driveId,
         childCount: null,
         lastModified: null,
         size: 0,
@@ -96,7 +134,82 @@ export default async function handler(req, res) {
     }
   });
 
-  res.status(200).json({ items });
+  // Agrupa pastas acessíveis que possuem o mesmo nome normalizado
+  const groupedMap = new Map();
+  const inaccessibleItems = [];
+
+  for (const item of rawItems) {
+    if (item.error) {
+      inaccessibleItems.push(item);
+      continue;
+    }
+
+    const groupKey = normalizeGroupKey(item.name);
+
+    if (!groupedMap.has(groupKey)) {
+      groupedMap.set(groupKey, {
+        ...item,
+        sources: [
+          {
+            driveId: item.driveId,
+            itemId: item.id,
+            originalName: item.originalName,
+            childCount: item.childCount,
+          },
+        ],
+      });
+    } else {
+      const existing = groupedMap.get(groupKey);
+      existing.sources.push({
+        driveId: item.driveId,
+        itemId: item.id,
+        originalName: item.originalName,
+        childCount: item.childCount,
+      });
+
+      // Soma a contagem de itens filhos das pastas agrupadas
+      if (existing.childCount !== null || item.childCount !== null) {
+        existing.childCount = (existing.childCount || 0) + (item.childCount || 0);
+      }
+
+      // Mantém a data de modificação mais recente
+      if (
+        item.lastModified &&
+        (!existing.lastModified || new Date(item.lastModified) > new Date(existing.lastModified))
+      ) {
+        existing.lastModified = item.lastModified;
+      }
+    }
+  }
+
+  // Para grupos com mais de uma pasta raiz de origem, codifica os pares driveId:itemId
+  // para que /api/children e /api/search possam consultar todas as origens do grupo
+  const items = Array.from(groupedMap.values()).map((group) => {
+    if (group.sources.length === 1) {
+      return group;
+    }
+
+    const compositeTargets = group.sources
+      .map((s) => `${s.driveId}:${s.itemId}`)
+      .join(",");
+
+    return {
+      ...group,
+      id: compositeTargets,
+      driveId: "group",
+      isGrouped: true,
+      sourceCount: group.sources.length,
+    };
+  });
+
+  // Ordena as pastas agrupadas alfabeticamente (pt-BR)
+  items.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+
+  // Só anexa pastas inacessíveis caso nenhuma pasta tenha carregado com sucesso,
+  // evitando poluir a home com cards de erro quando o usuário tem acesso parcial
+  const finalItems = items.length > 0 ? items : inaccessibleItems;
+
+  res.status(200).json({ items: finalItems });
 }
 
 function getCookie(req, name) {

@@ -85,6 +85,7 @@ Para detalhes das variáveis de ambiente e configuração Azure, leia [`referenc
 
 As pastas de vídeo são hardcoded em `pages/api/shared.js` como array `ROOT_FOLDERS`.
 Cada entrada tem `driveId` e `itemId` — identificados via rota de diagnóstico.
+Pastas que resultam no mesmo nome de exibição (ex: múltiplas pastas mapeadas para `"LOTE 2 - PLANEP"` em `folderNames`) são agrupadas automaticamente em um único card na tela inicial (`driveId: "group"`, `id: "driveId1:itemId1,driveId2:itemId2"`), e `children.js` / `search.js` expandem o grupo em paralelo.
 
 **Como adicionar uma nova pasta raiz:**
 1. Deploy da rota `pages/api/debug-search.js` (ver [`references/diagnostico.md`](references/diagnostico.md))

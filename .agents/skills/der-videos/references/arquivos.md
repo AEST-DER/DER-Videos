@@ -50,8 +50,8 @@ Expira ambos os cookies com `Max-Age=0` e redireciona para `/`.
 Ponto de entrada da navegação. Retorna os metadados das pastas raiz configuradas
 em `ROOT_FOLDERS` (array exportado de `{ driveId, itemId }`) e aplica o mapa de nomes amigáveis `folderNames` (também exportado).
 
-Usa `Promise.allSettled` para buscar todas em paralelo.
-Se uma pasta falhar, retorna com `error: true` no item em vez de quebrar as demais.
+- **Agrupamento de pastas homônimas:** Pastas raiz de diferentes drives que resultam no mesmo nome de exibição (normalizado via `normalizeGroupKey`, ignorando caixa, espaços extras e diferenças entre hífen/travessão) são agrupadas em um único card virtual na home (`driveId: "group"`, `id: "driveId1:itemId1,driveId2:itemId2"`, `isGrouped: true`, `sourceCount` e `childCount` somado).
+- Usa `Promise.allSettled` para buscar todas em paralelo. Se todas retornarem `401`, propaga `401` para o frontend renovar a sessão. Pastas inacessíveis individuais são omitidas quando há pastas válidas para não poluir a tela inicial.
 
 Endpoint Graph usado: `GET /drives/{driveId}/items/{itemId}`
 (busca metadados da pasta, não seus filhos — filhos são carregados sob demanda)
@@ -60,8 +60,8 @@ Endpoint Graph usado: `GET /drives/{driveId}/items/{itemId}`
 
 ## pages/api/children.js
 
-Lista o conteúdo de qualquer pasta, recebendo `driveId` e `itemId` via query string.
-Usado tanto para navegar dentro das pastas raiz quanto para subpastas recursivas.
+Lista o conteúdo de qualquer pasta (ou de um grupo de pastas homônimas), recebendo `driveId` e `itemId` via query string.
+- Quando `driveId === "group"` (ou `itemId` contém múltiplos pares `driveId:itemId` separados por vírgula), usa `parseTargets(driveId, itemId)` para buscar os filhos de todas as pastas do grupo em paralelo (`Promise.allSettled`) e mescla subpastas de mesmo nome automaticamente, mantendo o agrupamento em qualquer profundidade da árvore.
 
 Endpoint Graph: `GET /drives/{driveId}/items/{itemId}/children`
 Params: `$select=id,name,folder,video,file,size,lastModifiedDateTime,@microsoft.graph.downloadUrl,thumbnails&$top=100`
@@ -122,6 +122,8 @@ Estado principal:
 - `items` — array de itens do nível atual
 - `navStack` — array de `{ id, driveId, name }` representando o caminho atual
 - `playingVideo` — item de vídeo aberto no player, ou null
+- `searchInput` — valor em tempo real digitado na barra de busca do header
+- `debouncedQuery` — termo de busca estabilizado após debounce de 300ms
 
 Lógica de navegação:
 - `navStack.length === 0` → chama `/api/shared` (pastas raiz)
@@ -147,6 +149,7 @@ SVG inline do logo Microsoft (4 quadrados coloridos).
 Design tokens em `:root`. Modo escuro nativo (não usa media query — sempre escuro).
 Classes principais:
 - `.app-container`, `.header`, `.main-content`
+- `.header-search`, `.header-search-input`, `.header-search-icon`, `.header-search-clear`
 - `.items-grid`, `.item-card`, `.item-card-icon`, `.item-card-name`
 - `.modal-overlay`, `.modal-content`, `.video-wrapper`, `.video-player`
 - `.breadcrumb`, `.breadcrumb-item`, `.breadcrumb-sep`

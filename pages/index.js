@@ -131,6 +131,18 @@ export default function Home() {
   // Raiz = [], entrada compartilhada = [{ id: "root", driveId: null, name: "Compartilhados" }]
   const [navStack, setNavStack] = useState([]);
 
+  // Estado da barra de busca com debounce (300ms)
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchInput.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   // ── Verificação de autenticação ──────────────────────────────────────────
   useEffect(() => {
     async function checkAuth() {
@@ -301,6 +313,45 @@ export default function Home() {
             <div className="header-logo-icon">🎬</div>
             OneDrive Vídeos
           </div>
+
+          <div className="header-search" role="search">
+            <span className="header-search-icon" aria-hidden="true">🔍</span>
+            <input
+              ref={searchInputRef}
+              type="search"
+              className="header-search-input"
+              placeholder={
+                navStack.length === 0
+                  ? "Buscar vídeos ou pastas em todos os lotes…"
+                  : `Buscar em "${currentName}"…`
+              }
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && searchInput) {
+                  e.stopPropagation();
+                  setSearchInput("");
+                  setDebouncedQuery("");
+                }
+              }}
+              aria-label="Buscar vídeos ou pastas"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                className="header-search-clear"
+                onClick={() => {
+                  setSearchInput("");
+                  setDebouncedQuery("");
+                  searchInputRef.current?.focus();
+                }}
+                aria-label="Limpar busca"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
           <div className="header-actions">
             <button
               className="btn btn-ghost"

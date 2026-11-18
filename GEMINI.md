@@ -34,6 +34,7 @@ Aplicação web desenvolvida para a organização **DER/MG**, permitindo aos usu
 
 ### Gerenciamento de Pastas Raiz e Busca Recursiva
 - As pastas raiz exibidas na tela inicial estão configuradas no array `ROOT_FOLDERS` (e mapeadas por `folderNames`) exportados em `pages/api/shared.js`.
+- Pastas raiz ou subpastas com o mesmo nome normalizado (`normalizeGroupKey`) são agrupadas automaticamente em um único card virtual (`driveId: "group"`, `id: "driveId1:itemId1,driveId2:itemId2"`), e `pages/api/children.js` e `pages/api/search.js` consultam todas as origens do grupo em paralelo via `parseTargets`.
 - Cada pasta raiz requer `{ driveId, itemId }`, mapeados através do diagnóstico da Graph API.
 - A busca recursiva (*deep-search*) é realizada pela rota `pages/api/search.js` utilizando o endpoint nativo `/drives/{driveId}/items/{itemId}/search(q='...')` em paralelo (`Promise.allSettled`) nas pastas raiz ou restrita a uma subárvore (`driveId` e `itemId`).
 
