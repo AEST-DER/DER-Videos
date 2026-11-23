@@ -31,7 +31,7 @@ export const ROOT_FOLDERS = [
     itemId:  "01IFKV5KPNOM5KNL5JL5H3RWGPO3KLB5OY",
   },
   {
-
+    name: "LOTE 5 - Systra",
     driveId: "b!FMYdA-D_iESZQCQ6fXeblzHcIIBSXapEohXiUjrKcGHvPalwL-DbS7cHsiJcUgLb",
     itemId:  "01LLIJSH4JBVHVQZMCCVEZZW7DMQPCHBUL",
   },
@@ -48,7 +48,8 @@ export const folderNames = {
   "PLANEP - LOTE 2": "LOTE 2 - PLANEP",
   "PLANEP – LOTE 2": "LOTE 2 - PLANEP",
   "PLANEP": "LOTE 2 - PLANEP",
-  "LOTE 2": "LOTE 2 - PLANEP"
+  "LOTE 2": "LOTE 2 - PLANEP",
+  "VÍDEOS RTA" : "LOTE 4 - RTA"
 };
 
 /**
