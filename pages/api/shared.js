@@ -17,10 +17,12 @@ export const ROOT_FOLDERS = [
     itemId:  "01QSAFR6WCGH5GRB2XPBCIEBB3WWDRUCSH",
   },
   {
+    name: "PLANEP – LOTE 2",
     driveId: "b!wdSLol8Ty0-xSVCsjiX7pD9HNZgqlGVLvXtWan8vYJUt53I6xz_oSIEmiH_J07cM",
     itemId:  "01UIZVXMR7A4PNUNZW5ZDL5Y4YFXDWPLVT",
   },
   {
+    name: "PLANEP - LOTE 2",
     driveId: "b!y6Mzv180OU6r0xjapSH3P9PBm-q8ShVCv-o-5bUJm5C_oS3WePVcTpnr0iBw4Sr1",
     itemId:  "01VMDDKAWY6S67LYPQ4FE3CZCUEDJRRL5R",
   },
