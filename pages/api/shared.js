@@ -29,12 +29,15 @@ export const ROOT_FOLDERS = [
     itemId:  "01IFKV5KPNOM5KNL5JL5H3RWGPO3KLB5OY",
   },
   {
+
     driveId: "b!FMYdA-D_iESZQCQ6fXeblzHcIIBSXapEohXiUjrKcGHvPalwL-DbS7cHsiJcUgLb",
     itemId:  "01LLIJSH4JBVHVQZMCCVEZZW7DMQPCHBUL",
   },
   {
+    name: "lote 1",
     itemId: "01JFH3TV7CMVXMZZ7DSJGLXDLZTC3VWBLL",
-    driveId: "b!IagbPkMxS06IPBiiSlUGbBZvKl1JzmlFtWfUToL4hQHch8lkZrbzRanNFWWaUNDq"
+    driveId: "b!IagbPkMxS06IPBiiSlUGbBZvKl1JzmlFtWfUToL4hQHch8lkZrbzRanNFWWaUNDq",
+    shareUrl: "https://dermggovbr-my.sharepoint.com/:f:/g/personal/x01594341222_der_mg_gov_br/IgDiZW7M5-OSTLuNeZi3WwVrAQbhzs2ilawik_I_EB7yakY"
   }
 ];
 
@@ -68,28 +71,16 @@ export default async function handler(req, res) {
   const uniqueRoots = [];
   const seenRoots = new Set();
   for (const root of ROOT_FOLDERS) {
-    const key = `${root.driveId}:${root.itemId}`;
+    const key = root.shareUrl || `${root.driveId}:${root.itemId}`;
     if (!seenRoots.has(key)) {
       seenRoots.add(key);
       uniqueRoots.push(root);
     }
   }
 
-  // Busca os metadados de cada pasta raiz em paralelo
+    // Busca os metadados de cada pasta raiz em paralelo (resgatando shareUrl quando disponível)
   const results = await Promise.allSettled(
-    uniqueRoots.map(({ driveId, itemId }) =>
-      fetch(`${GRAPH_API}/drives/${driveId}/items/${itemId}?$select=id,name,folder,lastModifiedDateTime`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then(async (r) => {
-        if (!r.ok) {
-          const e = await r.json().catch(() => ({}));
-          const err = new Error(`${r.status}: ${e.error?.message || "Erro na Graph API"}`);
-          err.status = r.status;
-          throw err;
-        }
-        return { driveId, data: await r.json() };
-      })
-    )
+    uniqueRoots.map((root) => fetchRootFolder(root, token))
   );
 
   // Se todas as chamadas falharam com 401, retorna 401 para o frontend renovar a sessão
@@ -218,4 +209,57 @@ function getCookie(req, name) {
     if (k?.trim() === name) acc = v.join("=").trim();
     return acc;
   }, null);
+}
+
+export function encodeSharingUrl(url){
+  const base64 = Buffer.from(url.trim(), "utf-8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  return `u!${base64}`;
+}
+
+export async function fetchRootFolder({ driveId, itemId, shareUrl }, token) {
+  // 1. Se tiver shareUrl, usa /shares com redeemSharingLink
+  if (shareUrl) {
+    const shareToken = encodeSharingUrl(shareUrl);
+    const res = await fetch(
+      `${GRAPH_API}/shares/${shareToken}/driveItem?$select=id,name,folder,lastModifiedDateTime,parentReference`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Prefer: "redeemSharingLink",
+        },
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        driveId: driveId || data.parentReference?.driveId,
+        data,
+      };
+    }
+    // Se não tiver driveId/itemId de fallback, já lança o erro da Graph API
+    if (!driveId || !itemId) {
+      const e = await res.json().catch(() => ({}));
+      const err = new Error(`${res.status}: ${e.error?.message || "Erro ao acessar shareUrl"}`);
+      err.status = res.status;
+      throw err;
+    }
+  }
+  // 2. Fluxo por driveId + itemId (ou fallback caso o shareUrl tenha falhado)
+  const res = await fetch(
+    `${GRAPH_API}/drives/${driveId}/items/${itemId}?$select=id,name,folder,lastModifiedDateTime`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    const err = new Error(`${res.status}: ${e.error?.message || "Erro na Graph API"}`);
+    err.status = res.status;
+    throw err;
+  }
+  return { driveId, data: await res.json() };
 }
