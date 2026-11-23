@@ -13,27 +13,35 @@ const GRAPH_API = "https://graph.microsoft.com/v1.0";
 // Para adicionar mais: inclua um novo objeto com driveId e itemId.
 export const ROOT_FOLDERS = [
   {
+    name: "LOTE 4 - RTA",
     driveId: "b!whoE7FWYLUaYEImzCfTbC3Jdb0ZlNedDrl9AUW8vEtvo5yHX02WrQKkIpzT9z8IZ",
     itemId:  "01QSAFR6WCGH5GRB2XPBCIEBB3WWDRUCSH",
+    shareUrl: "https://dermggovbr-my.sharepoint.com/:f:/g/personal/x02516765100_der_mg_gov_br/IgDCMfpoh1d4RIIEO7WHGgpHASeFYWHTDP4AUGNHVF-HFew"
   },
   {
     name: "PLANEP – LOTE 2",
     driveId: "b!wdSLol8Ty0-xSVCsjiX7pD9HNZgqlGVLvXtWan8vYJUt53I6xz_oSIEmiH_J07cM",
     itemId:  "01UIZVXMR7A4PNUNZW5ZDL5Y4YFXDWPLVT",
+    shareUrl: "https://dermggovbr-my.sharepoint.com/:f:/g/personal/x00916809641_der_mg_gov_br/IgA_Bx7aNzbuRr7jmC3HZ66zAUEGbrwue9e_NL9sbS1XGTU"
   },
   {
     name: "PLANEP - LOTE 2",
     driveId: "b!y6Mzv180OU6r0xjapSH3P9PBm-q8ShVCv-o-5bUJm5C_oS3WePVcTpnr0iBw4Sr1",
     itemId:  "01VMDDKAWY6S67LYPQ4FE3CZCUEDJRRL5R",
+    shareUrl: "https://dermggovbr-my.sharepoint.com/:f:/g/personal/x12105738656_der_mg_gov_br/IgDY9L314fDhSbFkVCDTGK-xAeSt2YBrKKtjvnNpITOpjlQ"
   },
   {
+    name: "LOTE 3 - STRATA",
     driveId: "b!zlW0tK-Is0OXk9PgToFMqnJdb0ZlNedDrl9AUW8vEtvo5yHX02WrQKkIpzT9z8IZ",
     itemId:  "01IFKV5KPNOM5KNL5JL5H3RWGPO3KLB5OY",
+    shareUrl: "https://dermggovbr-my.sharepoint.com/:f:/g/personal/x02269229444_der_mg_gov_br/IgDtczqmr6lfT7jYz3bUsPXYAccHdSmmdYo82A5TVGg-hzE"
+
   },
   {
     name: "LOTE 5 - Systra",
     driveId: "b!FMYdA-D_iESZQCQ6fXeblzHcIIBSXapEohXiUjrKcGHvPalwL-DbS7cHsiJcUgLb",
     itemId:  "01LLIJSH4JBVHVQZMCCVEZZW7DMQPCHBUL",
+    shareUrl: ""
   },
   {
     name: "lote 1",
