@@ -41,7 +41,7 @@ export const ROOT_FOLDERS = [
     name: "LOTE 5 - Systra",
     driveId: "b!FMYdA-D_iESZQCQ6fXeblzHcIIBSXapEohXiUjrKcGHvPalwL-DbS7cHsiJcUgLb",
     itemId:  "01LLIJSH4JBVHVQZMCCVEZZW7DMQPCHBUL",
-    shareUrl: ""
+    shareUrl: "https://dermggovbr-my.sharepoint.com/:f:/g/personal/x90137990600_der_mg_gov_br/IgCJDU9YZYIVSZzb42QeI4aLAWLkoIp-m7MfH8adSSBNoZM"
   },
   {
     name: "lote 1",
