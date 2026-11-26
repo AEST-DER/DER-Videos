@@ -52,12 +52,13 @@ export const ROOT_FOLDERS = [
 ];
 
 export const folderNames = {
-  "02 - Produto 2": "LOTE 1",
+  "02 - Produto 2": "LOTE 1 - GEOSISTEMAS",
   "PLANEP - LOTE 2": "LOTE 2 - PLANEP",
   "PLANEP – LOTE 2": "LOTE 2 - PLANEP",
   "PLANEP": "LOTE 2 - PLANEP",
   "LOTE 2": "LOTE 2 - PLANEP",
-  "VÍDEOS RTA" : "LOTE 4 - RTA"
+  "VÍDEOS RTA" : "LOTE 4 - RTA",
+  "LOTE 5 - Systra": "LOTE 5 - SYSTRA"
 };
 
 /**
