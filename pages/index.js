@@ -496,7 +496,7 @@ export default function Home() {
     return (
       <>
         <Head>
-          <title>OneDrive Vídeos</title>
+          <title>ICM Vídeos</title>
         </Head>
         <div className="app-container">
           <div className="loading-state" style={{ flex: 1, height: "100vh" }}>
@@ -517,8 +517,8 @@ export default function Home() {
     return (
       <>
         <Head>
-          <title>OneDrive Vídeos — Login</title>
-          <meta name="description" content="Acesse seus vídeos compartilhados no OneDrive" />
+          <title>ICM Vídeos — Login</title>
+          <meta name="description" content="Acesse os vídeos do ICM de forma prática" />
         </Head>
         <div className="app-container">
           <header className="header">
@@ -526,8 +526,8 @@ export default function Home() {
               <div className="header-logo-icon">
                 <BrandPlayIcon size={16} />
               </div>
-              <span>OneDrive Vídeos</span>
-              <span className="header-logo-tag">DER/MG</span>
+              <span>ICM Vídeos</span>
+              <span className="header-logo-tag">DER-MG</span>
             </div>
 
             <div className="header-actions">
@@ -541,9 +541,9 @@ export default function Home() {
                 <BrandPlayIcon size={26} />
               </div>
               <span className="login-eyebrow">Acervo Audiovisual</span>
-              <h1 className="login-title">OneDrive Vídeos</h1>
+              <h1 className="login-title">ICM Vídeos</h1>
               <p className="login-subtitle">
-                Acesse e reproduza vídeos corporativos compartilhados no OneDrive
+                Acesse, reproduza ou baixe vídeos do ICM
                 diretamente pelo navegador, com streaming instantâneo.
               </p>
 
@@ -605,8 +605,8 @@ export default function Home() {
             <div className="header-logo-icon">
               <BrandPlayIcon size={16} />
             </div>
-            <span>OneDrive Vídeos</span>
-            <span className="header-logo-tag">DER/MG</span>
+            <span>ICM Vídeos</span>
+            <span className="header-logo-tag">DER-MG</span>
           </div>
 
           <div className="header-search" role="search">
