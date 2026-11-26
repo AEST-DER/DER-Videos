@@ -105,9 +105,7 @@ function ItemCard({ item, onClick }) {
       <div>
         <div className={`item-type-badge badge-${item.type}`}>
           {item.type === "folder"
-            ? item.isGrouped
-              ? `PASTA (${item.sourceCount} ORIGENS)`
-              : "PASTA"
+            ? "PASTA"
             : item.type === "video"
             ? "VÍDEO"
             : "ARQUIVO"}
