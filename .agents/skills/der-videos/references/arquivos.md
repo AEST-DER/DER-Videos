@@ -127,6 +127,7 @@ Estado principal:
 - `items` — array de itens do nível atual (navegação pasta a pasta)
 - `navStack` — array de `{ id, driveId, name }` representando o caminho atual
 - `playingVideo` — item de vídeo aberto no player, ou null
+- `theme` — `"dark"` (padrão *Obsidian Glass*) ou `"light"` (*Daylight Glass*), sincronizado com `document.documentElement.setAttribute("data-theme", theme)` e `localStorage` (`der-videos-theme`)
 - `searchInput` — valor em tempo real digitado na barra de busca do header
 - `debouncedQuery` — termo de busca estabilizado após debounce de 300ms
 - `searchResults`, `searchLoading`, `searchError` — resultados e estados da busca recursiva via `/api/search`
@@ -148,7 +149,10 @@ Monta `src` diretamente como `/api/video-url?driveId=...&itemId=...`.
 Fecha com Escape ou clique fora.
 
 ### `<ItemCard>`
-Card clicável. Exibe ícone, badge de tipo (incluindo indicador `PASTA (N ORIGENS)` quando `item.isGrouped`), nome, trilha de origem `↳ parentPath` (nos resultados da busca) e metadados (`childCount` ou tamanho).
+Card clicável em vidro translúcido com animação escalonada (`--stagger`). Exibe ícone SVG monolinear, badge de tipo (`PASTA`, `VÍDEO`, `ARQUIVO`), nome, trilha de origem `↳ parentPath` (nos resultados da busca), metadados (`childCount` ou tamanho) e micro-indicador de seta no rodapé.
+
+### `<ThemeToggleButton>`
+Botão discreto `36x36px` no header (presente na tela de login e na tela principal) que alterna entre os temas escuro (`SunSvgIcon`) e claro (`MoonSvgIcon`).
 
 ### `<MicrosoftLogo>`
 SVG inline do logo Microsoft (4 quadrados coloridos).
@@ -157,15 +161,16 @@ SVG inline do logo Microsoft (4 quadrados coloridos).
 
 ## styles/globals.css
 
-Design tokens em `:root`. Modo escuro nativo (não usa media query — sempre escuro).
+Design tokens em `:root` (tema escuro padrão **Obsidian Glass**) e `[data-theme="light"]` (modo claro **Daylight Glass**), com glassmorphism (`backdrop-filter`), bordas especulares de `1px` e curvas de transição `cubic-bezier(0.16, 1, 0.3, 1)`.
 Classes principais:
-- `.app-container`, `.header`, `.main-content`
+- `.app-container`, `.header`, `.header-logo-tag`, `.main-content`
 - `.header-search`, `.header-search-input`, `.header-search-icon`, `.header-search-clear`
+- `.btn-theme-toggle`
 - `.section-header`, `.section-header-right`, `.btn-clear-inline`
-- `.items-grid`, `.item-card`, `.item-card-icon`, `.item-card-name`, `.item-card-path`
+- `.items-grid`, `.item-card`, `.item-card-top`, `.item-card-icon`, `.item-card-body`, `.item-card-name`, `.item-card-path`, `.item-card-footer`, `.item-card-arrow`
 - `.modal-overlay`, `.modal-content`, `.video-wrapper`, `.video-player`
-- `.breadcrumb`, `.breadcrumb-item`, `.breadcrumb-sep`
+- `.breadcrumb`, `.breadcrumb-group`, `.breadcrumb-item`, `.breadcrumb-sep`
 - `.loading-state`, `.error-state`, `.empty-state`, `.error-banner`
 - `.btn`, `.btn-primary`, `.btn-ghost`, `.btn-danger`
-- `.login-screen`, `.login-btn-ms`
+- `.login-screen`, `.login-card`, `.login-eyebrow`, `.login-btn-ms`, `.login-footnote`
 - `.spinner` (animação CSS pura)

@@ -4,32 +4,35 @@ Referência técnica para o agente `der-videos-ui` ao implementar ou ajustar tem
 
 ---
 
-## 1. Paleta Recomendada para Modo Claro (`[data-theme="light"]`)
+## 1. Paleta Implementada para Modo Claro (`[data-theme="light"]` — *Daylight Glass*)
 
-O projeto nasce com o tema escuro ("Media Vault") como padrão no `:root`. Para suportar o **Modo Claro** sem alterar os componentes existentes, basta declarar o seletor `[data-theme="light"]` em `styles/globals.css` sobrescrevendo os tokens:
+O projeto utiliza o tema escuro **Obsidian Glass** como padrão no `:root` e suporta nativamente o **Modo Claro (Daylight Glass)** através do seletor `[data-theme="light"]` em `styles/globals.css`:
 
 ```css
 [data-theme="light"] {
-  --bg-base:        #F4F5F8;
-  --bg-surface:     #FFFFFF;
-  --bg-card:        #FFFFFF;
-  --bg-card-hover:  #F8FAFC;
-  --bg-overlay:     rgba(15, 23, 42, 0.75);
+  --bg-base:           #F5F5F7;
+  --bg-surface:        rgba(255, 255, 255, 0.76);
+  --bg-card:           rgba(255, 255, 255, 0.72);
+  --bg-card-hover:     rgba(255, 255, 255, 0.96);
+  --bg-glass-strong:   rgba(255, 255, 255, 0.88);
+  --bg-overlay:        rgba(15, 23, 42, 0.58);
 
-  --border:         #E2E8F0;
-  --border-accent:  #2563EB;
+  --border:            rgba(15, 23, 42, 0.08);
+  --border-highlight:  rgba(15, 23, 42, 0.16);
+  --border-accent:     rgba(37, 99, 235, 0.42);
+  --specular-top:      rgba(255, 255, 255, 0.9);
 
-  --text-primary:   #0F172A;
-  --text-secondary: #475569;
-  --text-muted:     #64748B;
+  --text-primary:      #0F172A;
+  --text-secondary:    #475569;
+  --text-muted:        #64748B;
 
-  --accent:         #2563EB;
-  --accent-glow:    rgba(37, 99, 235, 0.18);
-  --accent-hover:   #1D4ED8;
+  --accent:            #2563EB;
+  --accent-glow:       rgba(37, 99, 235, 0.14);
+  --accent-hover:      #1D4ED8;
 
-  --success:        #16A34A;
-  --danger:         #DC2626;
-  --warning:        #D97706;
+  --success:           #16A34A;
+  --danger:            #DC2626;
+  --warning:           #D97706;
 }
 ```
 

@@ -39,7 +39,7 @@ Aplicação web desenvolvida para a organização **DER/MG**, permitindo aos usu
 - A busca recursiva (*deep-search*) é realizada pela rota `pages/api/search.js` de forma híbrida: consulta o endpoint nativo `/drives/{driveId}/items/{itemId}/search(q='...')` (sem `thumbnails` no `$select`, que causa HTTP 400 em `/search`) e, quando o índice do OneDrive compartilhado retorna vazio, aciona automaticamente uma varredura recursiva rápida em largura (BFS concorrente por nível via `/children`, com orçamento de 6,5s seguro para a Vercel Hobby) com correspondência local insensível a acentos/maiúsculas.
 
 ### Design System & Estilização
-- Tema escuro ("media vault") implementado via variáveis CSS em `:root` em `styles/globals.css`.
+- Tema escuro padrão **Obsidian Glass** (`:root`) e modo claro **Daylight Glass** (`[data-theme="light"]`) implementados via variáveis CSS, camadas translúcidas (`backdrop-filter`) e iconografia SVG monolinear em `styles/globals.css` e `pages/index.js`.
 - Não instalar Tailwind CSS, Bootstrap, Material-UI ou outras bibliotecas visuais sem solicitação expressa.
 
 ---

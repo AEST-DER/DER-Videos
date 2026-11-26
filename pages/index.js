@@ -18,17 +18,171 @@ function formatSize(bytes) {
   return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
 }
 
+// ─── Iconografia SVG Monolinear (1.5px stroke) ──────────────────────────────
+
+function BrandPlayIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="2.75" y="4.75" width="18.5" height="14.5" rx="3.25" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M10.25 9.35L15.25 12L10.25 14.65V9.35Z" fill="currentColor" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function FolderSvgIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M3.5 6.75C3.5 5.64543 4.39543 4.75 5.5 4.75H9.17157C9.70201 4.75 10.2107 4.96071 10.5858 5.33579L12.1642 6.91421C12.5393 7.28929 13.048 7.5 13.5784 7.5H18.5C19.6046 7.5 20.5 8.39543 20.5 9.5V17.25C20.5 18.3546 19.6046 19.25 18.5 19.25H5.5C4.39543 19.25 3.5 18.3546 3.5 17.25V6.75Z"
+        fill="currentColor"
+        fillOpacity="0.12"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function VideoSvgIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10.4 9.15L15.15 12L10.4 14.85V9.15Z" fill="currentColor" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function FileSvgIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M6.5 3.75H14L18.25 8V18.25C18.25 19.3546 17.3546 20.25 16.25 20.25H6.5C5.39543 20.25 4.5 19.3546 4.5 18.25V5.75C4.5 4.64543 5.39543 3.75 6.5 3.75Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M13.75 3.75V8.25H18.25" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SearchSvgIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="11" cy="11" r="6.75" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M16 16L20.25 20.25" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function HomeSvgIcon() {
+  return (
+    <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M4.25 10.5L12 4L19.75 10.5V18.5C19.75 19.3284 19.0784 20 18.25 20H5.75C4.92157 20 4.25 19.3284 4.25 18.5V10.5Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightSvgIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M9.5 6.5L15 12L9.5 17.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function RefreshSvgIcon({ spinning }) {
+  return (
+    <svg
+      className={spinning ? "icon-spin" : ""}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C14.7614 4.5 17.1735 5.99229 18.4721 8.21115"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+      <path d="M18.75 4.5V8.5H14.75" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CloseSvgIcon({ size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M6.75 6.75L17.25 17.25M17.25 6.75L6.75 17.25" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SunSvgIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.65" />
+      <path
+        d="M12 3V5M12 19V21M3 12H5M19 12H21M5.636 5.636L7.05 7.05M16.95 16.95L18.364 18.364M18.364 5.636L16.95 7.05M7.05 16.95L5.636 18.364"
+        stroke="currentColor"
+        strokeWidth="1.65"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MoonSvgIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path
+        d="M20.2 14.6C19.2 15.05 18.1 15.3 16.9 15.3C12.37 15.3 8.7 11.63 8.7 7.1C8.7 5.9 8.95 4.8 9.4 3.8C5.92 4.78 3.4 7.98 3.4 11.78C3.4 16.38 7.12 20.1 11.72 20.1C15.52 20.1 18.72 17.58 20.2 14.6Z"
+        stroke="currentColor"
+        strokeWidth="1.65"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function AlertSvgIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <circle cx="12" cy="12" r="8.75" stroke="currentColor" strokeWidth="1.65" />
+      <path d="M12 8.25V12.75" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
+      <circle cx="12" cy="15.75" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ArrowRightSvgIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M5.5 12H18.5M18.5 12L13.25 6.75M18.5 12L13.25 17.25" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function getItemIcon(type) {
-  if (type === "folder") return "📁";
-  if (type === "video")  return "🎬";
-  return "📄";
+  if (type === "folder") return <FolderSvgIcon />;
+  if (type === "video")  return <VideoSvgIcon />;
+  return <FileSvgIcon />;
 }
 
 // ─── Componente: Ícone Microsoft ─────────────────────────────────────────────
 
 function MicrosoftLogo() {
   return (
-    <svg className="ms-logo" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+    <svg className="ms-logo" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect x="1"  y="1"  width="9" height="9" fill="#F25022"/>
       <rect x="11" y="1"  width="9" height="9" fill="#7FBA00"/>
       <rect x="1"  y="11" width="9" height="9" fill="#00A4EF"/>
@@ -37,7 +191,22 @@ function MicrosoftLogo() {
   );
 }
 
-// ─── Componente: VideoPlayer Modal ───────────────────────────────────────────
+// ─── Componente: Botão Discreto de Alternância de Tema ───────────────────────
+
+function ThemeToggleButton({ theme, onToggle }) {
+  const isLight = theme === "light";
+  return (
+    <button
+      type="button"
+      className="btn-theme-toggle"
+      onClick={onToggle}
+      aria-label={isLight ? "Ativar modo escuro" : "Ativar modo claro"}
+      title={isLight ? "Modo escuro" : "Modo claro"}
+    >
+      {isLight ? <MoonSvgIcon /> : <SunSvgIcon />}
+    </button>
+  );
+}
 
 // ─── Componente: VideoPlayer Modal ───────────────────────────────────────────
 
@@ -51,7 +220,7 @@ function VideoModal({ video, onClose }) {
 
   if (!video) return null;
 
-  // Monta a rota da sua API. O próprio player de vídeo do navegador 
+  // Monta a rota da sua API. O próprio player de vídeo do navegador
   // vai acessar esse link, receber o redirecionamento 302 e rodar o vídeo.
   const videoSrc = `/api/video-url?driveId=${encodeURIComponent(video.driveId)}&itemId=${encodeURIComponent(video.id)}`;
 
@@ -71,16 +240,16 @@ function VideoModal({ video, onClose }) {
             onClick={onClose}
             aria-label="Fechar player"
           >
-            ×
+            <CloseSvgIcon size={15} />
           </button>
         </div>
 
         <div className="video-wrapper">
-          <video 
-            src={videoSrc} 
-            controls 
+          <video
+            src={videoSrc}
+            controls
             autoPlay
-            width="100%" 
+            width="100%"
             preload="metadata"
           />
         </div>
@@ -91,18 +260,25 @@ function VideoModal({ video, onClose }) {
 
 // ─── Componente: Item Card ────────────────────────────────────────────────────
 
-function ItemCard({ item, onClick }) {
+function ItemCard({ item, index = 0, onClick }) {
+  const staggerIndex = Math.min(index, 18);
+  const metaText =
+    item.type === "folder" && item.childCount != null
+      ? `${item.childCount} ite${item.childCount === 1 ? "m" : "ns"}`
+      : formatSize(item.size);
+
   return (
     <button
-      className="item-card"
+      className={`item-card card-${item.type}`}
+      style={{ "--stagger": staggerIndex }}
       onClick={() => onClick(item)}
       aria-label={`${item.type === "folder" ? "Abrir pasta" : item.type === "video" ? "Reproduzir vídeo" : "Arquivo"}: ${item.name}`}
     >
-      <div className={`item-card-icon ${item.type}`}>
-        {getItemIcon(item.type)}
-      </div>
+      <div className="item-card-top">
+        <div className={`item-card-icon ${item.type}`}>
+          {getItemIcon(item.type)}
+        </div>
 
-      <div>
         <div className={`item-type-badge badge-${item.type}`}>
           {item.type === "folder"
             ? "PASTA"
@@ -110,6 +286,9 @@ function ItemCard({ item, onClick }) {
             ? "VÍDEO"
             : "ARQUIVO"}
         </div>
+      </div>
+
+      <div className="item-card-body">
         <div className="item-card-name">{item.name}</div>
         {item.parentPath && (
           <div className="item-card-path" title={item.parentPath}>
@@ -118,10 +297,13 @@ function ItemCard({ item, onClick }) {
         )}
       </div>
 
-      <div className="item-card-meta">
-        {item.type === "folder" && item.childCount != null
-          ? `${item.childCount} ite${item.childCount === 1 ? "m" : "ns"}`
-          : formatSize(item.size)}
+      <div className="item-card-footer">
+        <div className="item-card-meta">
+          {metaText || (item.type === "folder" ? "Diretório" : "Mídia")}
+        </div>
+        <span className="item-card-arrow" aria-hidden="true">
+          <ArrowRightSvgIcon />
+        </span>
       </div>
     </button>
   );
@@ -135,6 +317,24 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [playingVideo, setPlayingVideo] = useState(null);
+
+  // Estado visual de tema (Escuro padrão "Obsidian Glass" / Claro "Daylight Glass")
+  const [theme, setTheme] = useState("dark");
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("der-videos-theme");
+    if (saved === "light" || saved === "dark") {
+      setTheme(saved);
+      document.documentElement.setAttribute("data-theme", saved);
+    }
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+    window.localStorage.setItem("der-videos-theme", next);
+  }
 
   // Pilha de navegação: cada entrada é { id, driveId, name }
   // Raiz = [], entrada compartilhada = [{ id: "root", driveId: null, name: "Compartilhados" }]
@@ -323,36 +523,49 @@ export default function Home() {
         <div className="app-container">
           <header className="header">
             <div className="header-logo">
-              <div className="header-logo-icon">🎬</div>
-              OneDrive Vídeos
+              <div className="header-logo-icon">
+                <BrandPlayIcon size={16} />
+              </div>
+              <span>OneDrive Vídeos</span>
+              <span className="header-logo-tag">DER/MG</span>
+            </div>
+
+            <div className="header-actions">
+              <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
             </div>
           </header>
 
           <main className="login-screen">
-            <div className="login-icon">🎬</div>
-            <h1 className="login-title">OneDrive Vídeos</h1>
-            <p className="login-subtitle">
-              Acesse e assista seus vídeos compartilhados no OneDrive
-              diretamente no navegador, sem precisar baixar nada.
-            </p>
-
-            {loginError && (
-              <div className="error-banner" style={{ marginBottom: 24, maxWidth: 420 }}>
-                ⚠️ {decodeURIComponent(loginError)}
+            <div className="login-card">
+              <div className="login-icon">
+                <BrandPlayIcon size={26} />
               </div>
-            )}
+              <span className="login-eyebrow">Acervo Audiovisual</span>
+              <h1 className="login-title">OneDrive Vídeos</h1>
+              <p className="login-subtitle">
+                Acesse e reproduza vídeos corporativos compartilhados no OneDrive
+                diretamente pelo navegador, com streaming instantâneo.
+              </p>
 
-            <a href="/api/auth/login">
-              <button className="login-btn-ms">
-                <MicrosoftLogo />
-                Entrar com conta Microsoft
-              </button>
-            </a>
+              {loginError && (
+                <div className="error-banner" style={{ marginBottom: 20, width: "100%" }}>
+                  <AlertSvgIcon />
+                  <span>{decodeURIComponent(loginError)}</span>
+                </div>
+              )}
 
-            <p style={{ marginTop: 20, fontSize: 12, color: "var(--text-muted)", maxWidth: 360 }}>
-              Suas credenciais são gerenciadas pela Microsoft. Este app
-              solicita apenas permissão de leitura dos seus arquivos.
-            </p>
+              <a href="/api/auth/login" className="login-btn-link">
+                <button className="login-btn-ms">
+                  <MicrosoftLogo />
+                  Entrar com conta Microsoft
+                </button>
+              </a>
+
+              <p className="login-footnote">
+                Autenticação corporativa gerenciada via Microsoft Entra ID.
+                Acesso restrito a leitura de diretórios autorizados.
+              </p>
+            </div>
           </main>
         </div>
       </>
@@ -389,12 +602,17 @@ export default function Home() {
         {/* Header */}
         <header className="header">
           <div className="header-logo">
-            <div className="header-logo-icon">🎬</div>
-            OneDrive Vídeos
+            <div className="header-logo-icon">
+              <BrandPlayIcon size={16} />
+            </div>
+            <span>OneDrive Vídeos</span>
+            <span className="header-logo-tag">DER/MG</span>
           </div>
 
           <div className="header-search" role="search">
-            <span className="header-search-icon" aria-hidden="true">🔍</span>
+            <span className="header-search-icon" aria-hidden="true">
+              <SearchSvgIcon />
+            </span>
             <input
               ref={searchInputRef}
               type="search"
@@ -424,19 +642,21 @@ export default function Home() {
                 }}
                 aria-label="Limpar busca"
               >
-                ×
+                <CloseSvgIcon size={13} />
               </button>
             )}
           </div>
 
           <div className="header-actions">
+            <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
             <button
               className="btn btn-ghost"
               onClick={isSearching ? loadSearchResults : loadItems}
               disabled={activeLoading}
               aria-label="Atualizar lista"
             >
-              {activeLoading ? "⟳" : "↺"} Atualizar
+              <RefreshSvgIcon spinning={activeLoading} />
+              <span>Atualizar</span>
             </button>
             <a href="/api/auth/logout">
               <button className="btn btn-danger">Sair</button>
@@ -451,17 +671,25 @@ export default function Home() {
           <nav className="breadcrumb" aria-label="Navegação de pastas">
             <div className={`breadcrumb-item ${navStack.length === 0 && !isSearching ? "active" : ""}`}>
               {navStack.length === 0 && !isSearching ? (
-                <span>🏠 Início</span>
+                <span>
+                  <HomeSvgIcon />
+                  Início
+                </span>
               ) : (
-                <button onClick={() => handleBreadcrumbClick(-1)}>🏠 Início</button>
+                <button onClick={() => handleBreadcrumbClick(-1)}>
+                  <HomeSvgIcon />
+                  Início
+                </button>
               )}
             </div>
 
             {navStack.map((entry, i) => {
               const isLastAndNotSearching = i === navStack.length - 1 && !isSearching;
               return (
-                <div key={`${entry.id}-${i}`} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span className="breadcrumb-sep">›</span>
+                <div key={`${entry.id}-${i}`} className="breadcrumb-group">
+                  <span className="breadcrumb-sep" aria-hidden="true">
+                    <ChevronRightSvgIcon />
+                  </span>
                   <div className={`breadcrumb-item ${isLastAndNotSearching ? "active" : ""}`}>
                     {!isLastAndNotSearching ? (
                       <button onClick={() => handleBreadcrumbClick(i)}>
@@ -476,10 +704,15 @@ export default function Home() {
             })}
 
             {isSearching && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span className="breadcrumb-sep">›</span>
+              <div className="breadcrumb-group">
+                <span className="breadcrumb-sep" aria-hidden="true">
+                  <ChevronRightSvgIcon />
+                </span>
                 <div className="breadcrumb-item active">
-                  <span>🔍 Busca: &ldquo;{debouncedQuery}&rdquo;</span>
+                  <span>
+                    <SearchSvgIcon />
+                    Busca: &ldquo;{debouncedQuery}&rdquo;
+                  </span>
                 </div>
               </div>
             )}
@@ -488,7 +721,8 @@ export default function Home() {
           {/* Erro */}
           {activeError && !activeLoading && (
             <div className="error-banner">
-              ⚠️ {activeError}
+              <AlertSvgIcon />
+              <span>{activeError}</span>
               <button
                 className="btn btn-ghost"
                 onClick={isSearching ? loadSearchResults : loadItems}
@@ -516,7 +750,9 @@ export default function Home() {
             <>
               {activeItems.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-icon">{isSearching ? "🔍" : "📭"}</div>
+                  <div className="empty-icon">
+                    {isSearching ? <SearchSvgIcon /> : <FolderSvgIcon />}
+                  </div>
                   <div className="empty-title">
                     {isSearching
                       ? `Nenhum resultado para "${debouncedQuery}"`
@@ -561,7 +797,8 @@ export default function Home() {
                           className="btn-clear-inline"
                           onClick={clearSearch}
                         >
-                          Limpar busca ×
+                          <span>Limpar busca</span>
+                          <CloseSvgIcon size={11} />
                         </button>
                       )}
                       <span className="item-count">
@@ -574,10 +811,11 @@ export default function Home() {
                   </div>
 
                   <div className="items-grid">
-                    {activeItems.map((item) => (
+                    {activeItems.map((item, idx) => (
                       <ItemCard
                         key={`${item.driveId}:${item.id}`}
                         item={item}
+                        index={idx}
                         onClick={handleItemClick}
                       />
                     ))}

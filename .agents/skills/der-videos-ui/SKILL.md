@@ -41,23 +41,25 @@ Sua missão é evoluir, estilizar e refinar a experiência visual da aplicação
 
 Toda estilização deve utilizar os **Design Tokens (Variáveis CSS)** declarados em `:root`. Evite cores hexadecimais ou `rgba()` hardcoded diretamente nas classes dos componentes quando o valor depender do tema (claro/escuro).
 
-### Tokens Principais (`:root` — Tema Escuro "Media Vault" Padrão)
+### Tokens Principais (`:root` — Tema Escuro "Obsidian Glass" Padrão)
 | Categoria | Token | Valor Padrão (Escuro) | Uso |
 | :--- | :--- | :--- | :--- |
-| **Fundos** | `--bg-base` | `#0D0D0F` | Fundo geral do `body` |
-| | `--bg-surface` | `#141417` | Header e superfícies secundárias |
-| | `--bg-card` | `#1A1A1F` | Fundo padrão de cards, inputs e botões |
-| | `--bg-card-hover` | `#21212A` | Fundo de cards e inputs em hover/focus |
-| | `--bg-overlay` | `rgba(13, 13, 15, 0.92)` | Backdrop do modal de vídeo |
-| **Bordas** | `--border` | `#2A2A35` | Bordas sutis de cards, header e inputs |
-| | `--border-accent` | `#3B7EF6` | Borda de destaque em hover/focus |
-| **Textos** | `--text-primary` | `#F0F0F5` | Títulos e textos principais |
-| | `--text-secondary` | `#8888A0` | Subtítulos, caminhos (`parentPath`) e botões ghost |
-| | `--text-muted` | `#55556A` | Placeholders, contadores e metadados |
-| **Destaque** | `--accent` | `#3B7EF6` | Azul-cobalto principal |
-| | `--accent-glow` | `rgba(59, 126, 246, 0.25)` | Sombra de foco e badge de vídeo |
-| | `--accent-hover` | `#5A97FF` | Hover de botões primários |
-| **Semânticas**| `--success` / `--danger` / `--warning` | `#22C55E` / `#EF4444` / `#F59E0B` | Feedback, botão Sair e ícone de pastas |
+| **Fundos & Vidro** | `--bg-base` | `#060608` | Fundo geral do `body` com iluminação ambiente radial `--bg-ambient` |
+| | `--bg-surface` | `rgba(12, 12, 16, 0.72)` | Header sticky com `backdrop-filter: var(--blur-md)` |
+| | `--bg-card` | `rgba(255, 255, 255, 0.032)` | Fundo translúcido padrão de cards, inputs e botões |
+| | `--bg-card-hover` | `rgba(255, 255, 255, 0.064)` | Fundo de cards e inputs em hover/focus |
+| | `--bg-glass-strong` | `rgba(18, 18, 24, 0.78)` | Portal monolítico de login e moldura do modal de vídeo |
+| | `--bg-overlay` | `rgba(4, 4, 7, 0.84)` | Backdrop cinematográfico do modal de vídeo |
+| **Bordas Especulares** | `--border` | `rgba(255, 255, 255, 0.075)` | Bordas ultrafinas de `1px` |
+| | `--border-highlight` | `rgba(255, 255, 255, 0.16)` | Borda iluminada em hover |
+| | `--border-accent` | `rgba(79, 142, 255, 0.45)` | Borda de destaque azul em hover/focus |
+| **Textos** | `--text-primary` | `#F5F5F7` | Títulos e textos principais |
+| | `--text-secondary` | `#9494A3` | Subtítulos, caminhos (`parentPath`) e botões ghost |
+| | `--text-muted` | `#5E5E6E` | Placeholders, contadores e metadados |
+| **Destaque** | `--accent` | `#3B82F6` | Azul corporativo principal |
+| | `--accent-glow` | `rgba(59, 130, 246, 0.18)` | Halo de foco e brilho sutil |
+| | `--accent-hover` | `#60A5FA` | Hover de botões primários |
+| **Semânticas**| `--success` / `--danger` / `--warning` | `#22C55E` / `#EF4444` / `#F59E0B` | Feedback, botão Sair em hover e ícone de pastas |
 
 Para o catálogo completo de classes, animações e responsividade, consulte sempre:
 - [`.agents/skills/der-videos/references/design.md`](../der-videos/references/design.md)

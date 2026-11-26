@@ -124,12 +124,12 @@ Não usar `fetch()` para ler essa rota — usar diretamente como `src` da tag `<
 
 ## Design System
 
-Tema escuro "media vault". Variáveis CSS em `:root` em `globals.css`:
-- `--bg-base: #0D0D0F` · `--bg-card: #1A1A1F` · `--accent: #3B7EF6`
-- `--text-primary: #F0F0F5` · `--text-secondary: #8888A0`
-- Fonte: Inter (Google Fonts)
+Estética minimalista corporativa com **Obsidian Glass** (tema escuro padrão em `:root`) e **Daylight Glass** (modo claro em `[data-theme="light"]`) em `styles/globals.css`:
+- `--bg-base: #060608` · `--bg-card: rgba(255, 255, 255, 0.032)` · `--accent: #3B82F6`
+- `--text-primary: #F5F5F7` · `--text-secondary: #9494A3`
+- Fonte: Inter (Google Fonts) com `font-feature-settings: "cv02", "cv03", "cv04", "cv11"` e `tabular-nums` para metadados.
 
-Componentes principais em `index.js`: `VideoModal`, `ItemCard`, `MicrosoftLogo`.
+Componentes principais em `index.js`: `VideoModal`, `ItemCard`, `ThemeToggleButton`, `MicrosoftLogo` e ícones SVG monolineares.
 Para referência completa do CSS, leia [`references/design.md`](references/design.md).
 
 ---
