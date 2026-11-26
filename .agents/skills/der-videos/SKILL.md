@@ -1,16 +1,16 @@
 ---
 name: der-videos
 description: >
-  Skill para desenvolvimento e manutenção da aplicação DER Vídeos —
-  um viewer Next.js hospedado na Vercel que autentica usuários via Microsoft
-  (OAuth 2.0 Authorization Code Flow) e exibe vídeos armazenados em drives
-  do OneDrive/SharePoint usando a Microsoft Graph API.
+  Skill para desenvolvimento e manutenção de backend, arquitetura e integrações
+  da aplicação DER Vídeos — um viewer Next.js hospedado na Vercel que autentica
+  usuários via Microsoft (OAuth 2.0 Authorization Code Flow) e exibe vídeos
+  armazenados em drives do OneDrive/SharePoint usando a Microsoft Graph API.
   Use esta skill sempre que o usuário mencionar: adicionar novas pastas de
   vídeo, corrigir erros de autenticação Microsoft, ajustar rotas da Graph API,
-  mudar o visual da interface, configurar variáveis de ambiente na Vercel,
-  registrar permissões no Azure/Entra ID, resolver erros de AADSTS, ou
-  qualquer outra tarefa relacionada a esta aplicação. Use também ao receber
-  arquivos .zip ou código desta aplicação para dar continuidade ao desenvolvimento.
+  configurar variáveis de ambiente na Vercel, registrar permissões no
+  Azure/Entra ID, resolver erros de AADSTS, ou manutenção geral da aplicação.
+  Para tarefas focadas em visual, CSS, temas claro/escuro e UI/UX, utilize em
+  conjunto ou delegue para a skill `der-videos-ui`.
 ---
 
 # DER Vídeos — Skill de Desenvolvimento

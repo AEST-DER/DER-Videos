@@ -46,15 +46,23 @@ Aplicação web desenvolvida para a organização **DER/MG**, permitindo aos usu
 
 ## 3. Skills Agênticas do Workspace
 
-Este workspace possui skills operacionais em `.agents/skills/`.
+Este workspace possui skills operacionais em `.agents/skills/` que são ativadas automaticamente pelo agente conforme o contexto do pedido (ou explicitamente quando mencionadas pelo usuário):
 
-### Skill: `/der-videos` (`.agents/skills/der-videos/SKILL.md`)
-Ative esta skill ou consulte sua documentação para procedimentos operacionais detalhados:
+### Skill: `der-videos` (`.agents/skills/der-videos/SKILL.md`)
+Especialista em **arquitetura, backend, autenticação OAuth2, Microsoft Graph API e gerenciamento de pastas**:
 - **`references/arquivos.md`**: Detalhamento e responsabilidade de cada arquivo (`lib/msalConfig.js`, rotas em `pages/api/`, etc.).
 - **`references/configuracao.md`**: Guia de App Registration no Azure Entra ID, permissões delegadas e variáveis da Vercel.
 - **`references/diagnostico.md`**: Como descobrir `driveId` e `itemId` para adicionar novas pastas usando rotas temporárias de debug.
 - **`references/design.md`**: Catálogo de design tokens, paleta de cores e estrutura dos componentes UI.
 - **`references/erros.md`**: Troubleshooting de erros conhecidos (ex: códigos `AADSTS900971`, `AADSTS65004`, parsing de JSON em vídeo, etc.).
+
+### Skill: `der-videos-ui` (`.agents/skills/der-videos-ui/SKILL.md`)
+Especialista em **Design System, interface visual (UI/UX), CSS puro, temas (Modo Escuro / Modo Claro), responsividade e acessibilidade**:
+- Atua exclusivamente sobre a camada visual (`styles/globals.css` e JSX/classes em `pages/index.js`), com guardrails estritos que proíbem alterações em rotas de backend (`pages/api/`) ou lógica de autenticação e streaming.
+- **`references/temas-e-padroes.md`**: Paleta recomendada para Modo Claro (`[data-theme="light"]`), padrão de implementação de *Theme Toggle* e regras estruturais de layout.
+
+### Skill: `doc-sync` (`.agents/skills/doc-sync/SKILL.md`)
+Garante que qualquer alteração de código, configuração, estilo ou arquitetura mantenha a documentação do repositório sincronizada antes da conclusão da tarefa.
 
 ---
 
